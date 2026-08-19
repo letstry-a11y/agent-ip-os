@@ -8,7 +8,7 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 |---|---|---|---|---|---|---|
 | D-001 | G0 project boundary | Confirm the first content platform and its technical delivery branch. | Before M1-07 platform qualification probe; hard gate before M5 branch | Generate platform-neutral core plus complete publish packages; perform no real upload. | DECIDED | Xiaohongshu is the first content platform; package/manual publishing is the default until official generic note-publishing Scope is evidenced. |
 | D-002 | G0 project boundary | Confirm the launch column and whether/when to add a second column; keep the source-content MVP within image/text plus one 30-second vertical video. | Before M3-01 | Use synthetic fixtures; do not introduce an unapproved second public column. | DECIDED | Fixed launch column: `她写给世界的信`; second column remains unapproved pending later confirmation or first-round evidence. |
-| D-003 | G0 rights boundary | Decide whether any real portrait, voice, voice clone, or identity-derived AI avatar material may enter the MVP, with written purpose/platform/term/provider/derivative/revocation scope. | Before M3-06 | Use synthetic, non-identifying test assets; keep real face/voice storage disabled. | DECIDED | MVP does not use real portrait, real voice, voice cloning, or identity-derived avatar material. |
+| D-003 | G0 rights boundary | Authorize identity-derived virtual portrait use with the specific rights holder and written purpose/platform/term/provider/training/derivative/commercial/revocation scope. | Before any reference-image intake or generation; hard gate before M3-06 | Use synthetic, non-identifying test assets; keep real face/voice storage disabled. | BLOCKED | Founder selected identity-derived AI portrait direction; blocked until the portrait subject personally signs the scoped authorization and the approved Provider/storage path is recorded. |
 | D-004 | G1 deployment | Identify deployment主体 and actual service region. | End of week 1 / before M2-00 | Run locally with Mock Providers; no region-sensitive external service. | OPEN | Founders |
 | D-005 | G1 Provider | Approve legally usable text, image, video, and audio Provider candidates for that deployment region. | Before M2-00 | Choose M2B and implement two behavioral Mock/contract Providers only. | OPEN | Founders, with terms/privacy evidence |
 | D-006 | G1 budget | Set monthly infrastructure/model/media budget and per-content video-generation ceiling. | Before any paid Provider or cloud task | Paid calls disabled; local Mock-only. | OPEN | Founders |
@@ -37,15 +37,26 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Effective scope and expiry: First Xiaohongshu content experiment; remains effective until superseded by a dated founder decision.
 - Impact: Initial content schemas, templates, fixtures, and packages may reference this column. Do not add or imply a second public column without later confirmation. Continue to use only non-identifying photography, typography, screen/process material, and licensed or synthetic assets under D-003.
 
-### D-003 — no real portrait or voice in the MVP
+### D-003 revision 1 — no real portrait or voice in the MVP
 
-- Status: DECIDED
+- Status: SUPERSEDED on 2026-08-19 by D-003 revision 2
 - Date: 2026-08-19
 - Decision maker: Founder / rights holder instruction
 - Decision: Do not use real portrait, real voice, voice clone, or identity-derived AI avatar assets in the MVP.
 - Evidence / authorization reference: Founder instruction in the Codex project task.
 - Effective scope and expiry: Entire MVP until a new written, purpose/platform/term/provider/derivative/revocation-scoped decision supersedes it.
 - Impact: Use non-identifying original photography, typography, screen/process capture, licensed or synthetic assets, and non-identity-derived illustrations. Keep sensitive face/voice ingestion and storage disabled; D-003 must be reopened before any such implementation or asset intake.
+
+### D-003 revision 2 — intended identity-derived virtual AI portrait
+
+- Status: BLOCKED
+- Date: 2026-08-19
+- Direction selected by: Founder
+- Intended decision: Use a virtual AI portrait derived from a specific real person's identity for `她写给世界的信`, while continuing to exclude real voice and voice cloning.
+- Evidence / authorization reference: Founder direction in the Codex project task. This is product intent only and is not evidence of the portrait subject's consent.
+- Activation requirements: Identify the portrait subject; obtain that person's signed, withdrawable authorization covering input photos, Xiaohongshu/other platforms, purpose, term, territory, named Provider, Provider retention/training, derivative formats, commercial use, sublicensing, security, revocation, existing-post treatment, and deletion proof; record the approved storage/access path.
+- Safe state while blocked: Do not upload, ingest, transform, generate from, or publish any identity reference. Use non-identifying synthetic fixtures only.
+- Impact: D-003 revision 1 is superseded as product direction but remains the enforced technical fallback until all activation requirements pass. Identity-derived generation is R3, requires per-use evidence and human approval, must be clearly marked as AI-generated, and cannot be presented as a real photograph.
 
 ## Decision record template
 
