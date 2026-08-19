@@ -1,0 +1,5 @@
+# Keep authored source and documentation stable across Windows/Linux checkouts.
+* text=auto eol=lf
+
+# Approved baseline copies are byte-preserved so their recorded SHA-256 remains valid.
+docs/baseline/AI*.md -text
