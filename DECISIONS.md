@@ -7,7 +7,7 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 | ID | Gate | Decision required | Needed by | Safe fallback while open | Status | Owner / evidence |
 |---|---|---|---|---|---|---|
 | D-001 | G0 project boundary | Confirm the first content platform and its technical delivery branch. | Before M1-07 platform qualification probe; hard gate before M5 branch | Generate platform-neutral core plus complete publish packages; perform no real upload. | DECIDED | Xiaohongshu is the first content platform; package/manual publishing is the default until official generic note-publishing Scope is evidenced. |
-| D-002 | G0 project boundary | Confirm first two content columns and whether the source-content MVP remains image/text plus one 30-second vertical video. | Before M3-01 | Use synthetic fixtures and generic column identifiers only. | OPEN | Creative founder |
+| D-002 | G0 project boundary | Confirm the launch column and whether/when to add a second column; keep the source-content MVP within image/text plus one 30-second vertical video. | Before M3-01 | Use synthetic fixtures; do not introduce an unapproved second public column. | DECIDED | Fixed launch column: `她写给世界的信`; second column remains unapproved pending later confirmation or first-round evidence. |
 | D-003 | G0 rights boundary | Decide whether any real portrait, voice, voice clone, or identity-derived AI avatar material may enter the MVP, with written purpose/platform/term/provider/derivative/revocation scope. | Before M3-06 | Use synthetic, non-identifying test assets; keep real face/voice storage disabled. | DECIDED | MVP does not use real portrait, real voice, voice cloning, or identity-derived avatar material. |
 | D-004 | G1 deployment | Identify deployment主体 and actual service region. | End of week 1 / before M2-00 | Run locally with Mock Providers; no region-sensitive external service. | OPEN | Founders |
 | D-005 | G1 Provider | Approve legally usable text, image, video, and audio Provider candidates for that deployment region. | Before M2-00 | Choose M2B and implement two behavioral Mock/contract Providers only. | OPEN | Founders, with terms/privacy evidence |
@@ -26,6 +26,16 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Evidence / authorization reference: Founder instruction in the Codex project task.
 - Effective scope and expiry: MVP content strategy; remains effective until superseded by a dated founder decision.
 - Impact: Adapt M1-07 qualification research and M3 packages to Xiaohongshu first. Unless an official, account-specific generic note-publishing API/Scope is verified, select the package/manual-publishing path rather than claiming automated publication. Douyin/Bilibili may remain later adapter candidates but are not the first content platform.
+
+### D-002 — fixed launch column: 她写给世界的信
+
+- Status: DECIDED
+- Date: 2026-08-19
+- Decision maker: Founder
+- Decision: Use `她写给世界的信` as the fixed first Xiaohongshu column. The column name remains stable across posts; each post uses a concrete topic/title beneath it.
+- Evidence / authorization reference: Founder instruction in the Codex project task.
+- Effective scope and expiry: First Xiaohongshu content experiment; remains effective until superseded by a dated founder decision.
+- Impact: Initial content schemas, templates, fixtures, and packages may reference this column. Do not add or imply a second public column without later confirmation. Continue to use only non-identifying photography, typography, screen/process material, and licensed or synthetic assets under D-003.
 
 ### D-003 — no real portrait or voice in the MVP
 
