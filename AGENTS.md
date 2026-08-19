@@ -52,14 +52,14 @@ Keep dependency direction toward domain contracts: apps may depend on packages; 
 ## Engineering conventions
 
 - Use UTF-8, LF line endings where tools permit, English identifiers, and descriptive snake_case Python modules / kebab-case documentation filenames.
-- Target Python 3.12 for backend code. The exact patch version and Node runtime are pinned in M0-04 after toolchain review; do not infer compatibility from the currently installed Python 3.14 or Node 24.
+- Use uv `0.12.3` with uv-managed CPython `3.12.13` for backend code. Use the Node `24` LTS line with npm `11`; `.python-version`, `.nvmrc`, `pyproject.toml`, `package.json`, and the lockfiles are authoritative.
 - Use typed Pydantic schemas at boundaries and version public schemas, prompts, policy rules, and Agent contracts.
 - Use UTC for stored timestamps and explicit IANA time zones for schedules; never rely on a host-local implicit time.
 - Add or update tests with every behavior change. A bug fix starts with a failing regression test where practicable.
 - Schema/API changes update the specification first and include migration plus compatibility tests.
 - Prompt, model, tool, or policy changes run the applicable evaluation suite before release.
 
-M0-04 will establish canonical format, lint, type-check, test, secret-scan, and migration-check commands. Until then, do not invent commands or claim those gates ran.
+The canonical local quality gate is `npm run check`; it runs repository integrity/secret/migration checks, Python formatting/lint/types/tests, and web formatting/lint/types/tests. `npm run build` verifies the production web build. Dependency changes must update and commit `uv.lock` or `package-lock.json`; CI and clean-checkout setup use locked installs only.
 
 ## Security and external effects
 

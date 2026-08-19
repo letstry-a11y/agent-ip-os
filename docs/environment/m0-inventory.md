@@ -61,6 +61,12 @@ Port availability is time-sensitive. M0-05 must recheck before binding and allow
 
 No Provider SDK, platform credential, cloud resource, database service, or media binary was installed or contacted.
 
+## M0-04 toolchain amendment
+
+With founder authorization for local M0-04 setup, the repository now uses a project-isolated uv-managed CPython `3.12.13` runtime and uv `0.12.3`; the global Python 3.14 installation remains untouched. The existing Node `24.15.0` and npm `11.12.1` satisfy the pinned Node 24/npm 11 lines. Dependency state is captured by `uv.lock` and `package-lock.json` and restored with locked-install commands.
+
+This amendment changes only the Python/Node development toolchain classification. Docker, WSL2, virtualization, FFmpeg/ffprobe, Provider credentials, and external platform access remain in their original missing, unconfirmed, or unauthorized states.
+
 ## Limitations
 
 - Restricted-account CIM and `systeminfo` access prevented a definitive virtualization/firmware result.

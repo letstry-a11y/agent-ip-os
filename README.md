@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-02 are complete. M0-03 specifications are ready for founder review. This repository intentionally contains no application implementation or installed dependencies yet; the next engineering task is `M0-04` after M0-03 is accepted.
+M0-00 through M0-03 are complete and accepted. M0-04 now provides the pinned Python/Node workspace, a minimal API and web shell, locked dependencies, local quality gates, and a GitHub Actions workflow. M0-05 remains blocked by the missing Docker/WSL2 prerequisites and unconfirmed virtualization.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
@@ -43,15 +43,37 @@ tests/                    unit, integration, workflow, and platform-sandbox test
 docs/                     durable product and operational memory
 ```
 
-Placeholder files preserve the planned boundaries in fresh clones. They are replaced by real package/app files only as their Backlog task begins.
+Placeholder files preserve boundaries that have not yet entered implementation. The API and web placeholders were replaced by their M0-04 project shells; business workflows remain out of scope until M1.
 
 ## Local prerequisites
 
-The read-only M0 inventory found Windows x64, Git, Node 24, and Python 3.14, but no Docker, WSL2, FFmpeg, or ffprobe. Virtualization could not be confirmed with current permissions. Python 3.14 is not the approved backend runtime; Python 3.12 remains the target. Do not install or change the machine as part of M0-00 through M0-03. Full evidence and required follow-up are in the [environment inventory](docs/environment/m0-inventory.md).
+The project pins uv `0.12.3`, uv-managed CPython `3.12.13`, Node `24` LTS, and npm `11`. The host's global Python 3.14 is not used by project commands. Docker, WSL2, FFmpeg, and ffprobe remain unavailable, and virtualization is unconfirmed. Full evidence and required follow-up are in the [environment inventory](docs/environment/m0-inventory.md).
 
 ## Commands
 
-Canonical one-command startup and one-command quality checks do not exist yet because `M0-04` (Python/Node project and CI) and `M0-05` (Docker Compose) have not been executed. Claiming one-command reproducibility before those tasks would be false. These commands must be documented here as part of those tasks and verified on a clean checkout.
+Install the pinned tools, then restore the locked dependencies from the repository root:
+
+```powershell
+uv python install
+uv sync --locked --all-groups
+npm ci --ignore-scripts
+```
+
+Run every M0-04 quality gate and the production web build:
+
+```powershell
+npm run check
+npm run build
+```
+
+For local development, start the current shells separately:
+
+```powershell
+npm run dev:api
+npm run dev:web
+```
+
+The API health endpoint is `http://127.0.0.1:8000/healthz`; the web shell uses `http://127.0.0.1:3000`. One-command full-stack startup is deliberately deferred to M0-05 because the database, object storage, and Temporal containers do not exist yet.
 
 ## Safety
 

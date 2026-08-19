@@ -12,12 +12,15 @@ secrets/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 .venv/
 venv/
+.tools/
+*.egg-info/
 
 # Node / Next.js
 node_modules/

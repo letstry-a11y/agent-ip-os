@@ -1,0 +1,58 @@
+[project]
+name = "agent-ip-os-workspace"
+version = "0.0.0"
+description = "Local-first workspace for the Agent IP OS control plane"
+requires-python = "==3.12.*"
+dependencies = ["agent-ip-api"]
+
+[dependency-groups]
+dev = [
+  "httpx2>=2,<3",
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<9",
+  "pytest-cov>=6.2,<7",
+  "ruff>=0.12,<1",
+]
+
+[tool.uv]
+package = false
+required-version = "==0.12.3"
+python-preference = "only-managed"
+
+[tool.uv.sources]
+agent-ip-api = { workspace = true }
+
+[tool.uv.workspace]
+members = ["apps/api"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["docs/baseline"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+exclude = ["docs/baseline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+pythonpath = ["."]
+cache_dir = ".tools/pytest-cache"
+addopts = "--strict-config --strict-markers --basetemp=.pytest-tmp"
+
+[tool.coverage.run]
+branch = true
+source = ["agent_ip_api"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 100

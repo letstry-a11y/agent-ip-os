@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: 0.12.3
+          enable-cache: true
+
+      - name: Install Python and locked dependencies
+        run: |
+          uv python install
+          uv sync --locked --all-groups
+
+      - name: Install locked Node dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run repository quality gates
+        run: npm run check
+
+      - name: Build web console
+        run: npm run build

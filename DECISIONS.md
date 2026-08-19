@@ -15,7 +15,7 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 | D-007 | G2 platform qualification | Record whether the chosen platform supplied a test account, app, OAuth callback domain, exact Scope, and API approval. | End of week 2 / before M5-00 | Choose M5B publish-package + manual reconciliation. | OPEN | Platform account holder |
 | D-008 | T3 governance | Register two distinct human approvers with MFA and confirm the initiator cannot self-approve. | Before enabling any T3 production action | Keep every T3 production action disabled. | OPEN | Both founders |
 | D-009 | Repository operations | Decide whether to create a private remote repository and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | OPEN | Founder |
-| D-010 | M0 acceptance | Review PRD, lifecycle specification, system context, data model, and ADRs; accept or request changes. | Before M0-04 is treated as downstream implementation | Specifications stay `ready for review`; no application setup is claimed complete. | OPEN | Founder |
+| D-010 | M0 acceptance | Review PRD, lifecycle specification, system context, data model, and ADRs; accept or request changes. | Before M0-04 is treated as downstream implementation | Specifications stay `ready for review`; no application setup is claimed complete. | DECIDED | Founder instructed Codex to continue the plan on 2026-08-19; M0-03 is accepted and M0-04 may proceed under recorded safe fallbacks. |
 
 ### D-001 — Xiaohongshu is the first content platform
 
@@ -58,6 +58,16 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Safe state while blocked: Do not upload, ingest, transform, generate from, or publish any identity reference. Use non-identifying synthetic fixtures only.
 - Impact: D-003 revision 1 is superseded as product direction but remains the enforced technical fallback until all activation requirements pass. Identity-derived generation is R3, requires per-use evidence and human approval, must be clearly marked as AI-generated, and cannot be presented as a real photograph.
 - Consent progress update (2026-08-19): Founder reports that the portrait subject agrees in principle. This narrows the open issue but does not replace the subject's completed signature, named Provider/data terms, or secure storage verification. Draft authorization: [身份衍生虚拟AI肖像授权与撤回清单（V1）](docs/rights/身份衍生虚拟AI肖像授权与撤回清单_v1.md).
+
+### D-010 — M0-03 specifications accepted
+
+- Status: DECIDED
+- Date: 2026-08-19
+- Decision maker: Founder
+- Decision: Accept the M0-03 PRD, lifecycle, system context, data model, and ADR baseline; continue with M0-04.
+- Evidence / authorization reference: Founder instruction “继续计划” in the Codex project task after the M0 review and product-decision sequence.
+- Effective scope and expiry: Authorizes local M0-04 engineering work only; it does not authorize real Provider/platform calls, production deployment, portrait processing, or M0-05 machine changes.
+- Impact: M0-03 becomes `DONE`. M0-04 may establish the local/CI toolchain using Mock-only and non-identifying fixtures. D-003 and external gates retain their documented safe fallbacks.
 
 ## Decision record template
 
