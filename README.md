@@ -27,6 +27,7 @@ The 12-week MVP delivers six combined Agent runtime units, image/text and one 30
 - [System context](docs/architecture/system-context.md): boundaries, components, trust zones, and dependencies.
 - [Core data model](docs/architecture/data-model.md): authoritative aggregates and relationships.
 - [Content lifecycle](docs/specs/content-lifecycle.md): parent/child state machines and invariants.
+- [AI portrait authorization template](docs/rights/身份衍生虚拟AI肖像授权与撤回清单_v1.md): scoped consent, Provider, security, approval, and revocation checklist.
 - [Architecture decisions](docs/adr/README.md): accepted technical decisions.
 - [M0 acceptance record](docs/acceptance/m0.md): evidence and remaining gate.
 
