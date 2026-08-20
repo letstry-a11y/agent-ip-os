@@ -14,7 +14,7 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 | D-006 | G1 budget | Set monthly infrastructure/model/media budget and per-content video-generation ceiling. | Before any paid Provider or cloud task | Paid calls disabled; local Mock-only. | OPEN | Founders |
 | D-007 | G2 platform qualification | Record whether the chosen platform supplied a test account, app, OAuth callback domain, exact Scope, and API approval. | End of week 2 / before M5-00 | Choose M5B publish-package + manual reconciliation. | OPEN | Platform account holder |
 | D-008 | T3 governance | Register two distinct human approvers with MFA and confirm the initiator cannot self-approve. | Before enabling any T3 production action | Keep every T3 production action disabled. | OPEN | Both founders |
-| D-009 | Repository operations | Decide whether to create a private remote repository and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | DECIDED | Founder authorized a private GitHub repository and first hosted CI on 2026-08-20; `letstry-a11y/agent-ip-os` is private and `main` is pushed. Branch protection is not enabled without a separate explicit settings change. |
+| D-009 | Repository operations | Decide remote visibility, hosted CI, and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | DECIDED | Founder changed `letstry-a11y/agent-ip-os` to public on 2026-08-20 after a credential/PII scan; protected `main` requires PRs and the `quality` check. |
 | D-010 | M0 acceptance | Review PRD, lifecycle specification, system context, data model, and ADRs; accept or request changes. | Before M0-04 is treated as downstream implementation | Specifications stay `ready for review`; no application setup is claimed complete. | DECIDED | Founder instructed Codex to continue the plan on 2026-08-19; M0-03 is accepted and M0-04 may proceed under recorded safe fallbacks. |
 
 ### D-001 — Xiaohongshu is the first content platform
@@ -69,15 +69,15 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Effective scope and expiry: Authorizes local M0-04 engineering work only; it does not authorize real Provider/platform calls, production deployment, portrait processing, or M0-05 machine changes.
 - Impact: M0-03 becomes `DONE`. M0-04 may establish the local/CI toolchain using Mock-only and non-identifying fixtures. D-003 and external gates retain their documented safe fallbacks.
 
-### D-009 — private GitHub remote and hosted CI
+### D-009 — public GitHub remote, hosted CI, and protected main
 
 - Status: DECIDED
 - Date: 2026-08-20
 - Decision maker: Founder
-- Decision: Create the private repository `letstry-a11y/agent-ip-os`, push local `main`, and run the M0-04 GitHub Actions workflow. Do not enable branch protection or change collaborator access without a separate explicit settings instruction.
-- Evidence / authorization reference: Founder instructions “需要建立私有github并首次托管ci” and “已经登录，请你创建可以吗” in the Codex project task; [first successful hosted CI run](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32333631269).
+- Decision: Create `letstry-a11y/agent-ip-os`, run hosted CI, then change the repository from private to public so the configured classic protection rule is enforced on `main`. Require pull requests, the up-to-date `quality` GitHub Actions check, resolved conversations, linear history, and no administrator bypass; do not allow force pushes or deletion. A single-founder repository does not require an approval that its author cannot supply.
+- Evidence / authorization reference: Founder instructions “需要建立私有github并首次托管ci”, “开启分支保护”, and “那改为公开库把，但分支保护还是要有” in the Codex project task; [first successful hosted CI run](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32333631269) and the public repository's [branch overview](https://github.com/letstry-a11y/agent-ip-os/branches).
 - Effective scope and expiry: Repository storage and CI for this project; no Provider/platform credential, production deployment, or application-side external effect is authorized.
-- Impact: The hosted-CI condition for M0-04 is satisfied. M0-04 becomes `DONE`; M0-05 remains separately blocked by local machine prerequisites.
+- Impact: The hosted-CI condition for M0-04 is satisfied. Future changes to `main` must use the protected pull-request path and pass `quality`. Repository code, documentation, Actions history, and logs are public. M0-05 remains separately blocked by local machine prerequisites.
 
 ## Decision record template
 

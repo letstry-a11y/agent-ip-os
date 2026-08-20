@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-04 are complete and accepted. M0-04 provides the pinned Python/Node workspace, a minimal API and web shell, locked dependencies, local quality gates, and a verified GitHub Actions workflow in the private [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository. M0-05 remains blocked by the missing Docker/WSL2 prerequisites and unconfirmed virtualization.
+M0-00 through M0-04 are complete and accepted. M0-04 provides the pinned Python/Node workspace, a minimal API and web shell, locked dependencies, local quality gates, and a verified GitHub Actions workflow in the public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository. The protected `main` branch requires pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M0-05 remains blocked by the missing Docker/WSL2 prerequisites.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
