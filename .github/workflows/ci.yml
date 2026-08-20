@@ -39,5 +39,8 @@ jobs:
       - name: Run repository quality gates
         run: npm run check
 
+      - name: Validate Docker Compose definition
+        run: npm run stack:config
+
       - name: Build web console
         run: npm run build
