@@ -14,7 +14,7 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 | D-006 | G1 budget | Set monthly infrastructure/model/media budget and per-content video-generation ceiling. | Before any paid Provider or cloud task | Paid calls disabled; local Mock-only. | OPEN | Founders |
 | D-007 | G2 platform qualification | Record whether the chosen platform supplied a test account, app, OAuth callback domain, exact Scope, and API approval. | End of week 2 / before M5-00 | Choose M5B publish-package + manual reconciliation. | OPEN | Platform account holder |
 | D-008 | T3 governance | Register two distinct human approvers with MFA and confirm the initiator cannot self-approve. | Before enabling any T3 production action | Keep every T3 production action disabled. | OPEN | Both founders |
-| D-009 | Repository operations | Decide whether to create a private remote repository and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | OPEN | Founder |
+| D-009 | Repository operations | Decide whether to create a private remote repository and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | DECIDED | Founder authorized a private GitHub repository and first hosted CI on 2026-08-20; `letstry-a11y/agent-ip-os` is private and `main` is pushed. Branch protection is not enabled without a separate explicit settings change. |
 | D-010 | M0 acceptance | Review PRD, lifecycle specification, system context, data model, and ADRs; accept or request changes. | Before M0-04 is treated as downstream implementation | Specifications stay `ready for review`; no application setup is claimed complete. | DECIDED | Founder instructed Codex to continue the plan on 2026-08-19; M0-03 is accepted and M0-04 may proceed under recorded safe fallbacks. |
 
 ### D-001 — Xiaohongshu is the first content platform
@@ -68,6 +68,16 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Evidence / authorization reference: Founder instruction “继续计划” in the Codex project task after the M0 review and product-decision sequence.
 - Effective scope and expiry: Authorizes local M0-04 engineering work only; it does not authorize real Provider/platform calls, production deployment, portrait processing, or M0-05 machine changes.
 - Impact: M0-03 becomes `DONE`. M0-04 may establish the local/CI toolchain using Mock-only and non-identifying fixtures. D-003 and external gates retain their documented safe fallbacks.
+
+### D-009 — private GitHub remote and hosted CI
+
+- Status: DECIDED
+- Date: 2026-08-20
+- Decision maker: Founder
+- Decision: Create the private repository `letstry-a11y/agent-ip-os`, push local `main`, and run the M0-04 GitHub Actions workflow. Do not enable branch protection or change collaborator access without a separate explicit settings instruction.
+- Evidence / authorization reference: Founder instructions “需要建立私有github并首次托管ci” and “已经登录，请你创建可以吗” in the Codex project task; [first successful hosted CI run](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32333631269).
+- Effective scope and expiry: Repository storage and CI for this project; no Provider/platform credential, production deployment, or application-side external effect is authorized.
+- Impact: The hosted-CI condition for M0-04 is satisfied. M0-04 becomes `DONE`; M0-05 remains separately blocked by local machine prerequisites.
 
 ## Decision record template
 
