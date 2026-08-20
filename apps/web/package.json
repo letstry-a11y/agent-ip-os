@@ -28,5 +28,8 @@
     "prettier": "^3.0.0",
     "typescript": "^5.9.0",
     "vitest": "^4.0.0"
+  },
+  "optionalDependencies": {
+    "@rolldown/binding-linux-x64-gnu": "1.2.5"
   }
 }
