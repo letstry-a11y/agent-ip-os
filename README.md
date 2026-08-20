@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-05 are complete. The repository has a pinned Python/Node workspace, minimal API and web shells, locked dependencies, local quality gates, hosted CI, and a verified five-service Docker Compose development stack. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M1 is the next implementation milestone; formal founder review of the M0-05 evidence remains to be recorded.
+M0-00 through M0-05 and M1-01 are complete. The repository has a pinned Python/Node workspace, minimal API and web shells, locked dependencies, local quality gates, hosted CI, a verified five-service Docker Compose development stack, shared versioned domain contracts, and forward-only PostgreSQL migrations for the authoritative M1 core. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M1-02 and M1-03 are the next implementation tasks; formal founder review of the M1-01 physical model remains to be recorded.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
@@ -31,6 +31,7 @@ The 12-week MVP delivers six combined Agent runtime units, image/text and one 30
 - [Architecture decisions](docs/adr/README.md): accepted technical decisions.
 - [Local development stack](docs/runbooks/local-development.md): one-command Compose operations and acceptance procedure.
 - [M0 acceptance record](docs/acceptance/m0.md): evidence and remaining gate.
+- [M1-01 schema evidence](docs/acceptance/m1-01-core-schema.md): migrations, invariants, and real-PostgreSQL verification.
 
 ## Planned repository layout
 
@@ -65,6 +66,14 @@ Run every M0-04 quality gate and the production web build:
 ```powershell
 npm run check
 npm run build
+```
+
+Apply the forward-only migrations to the local development database, then run the isolated
+real-PostgreSQL migration and constraint suite:
+
+```powershell
+npm run db:migrate
+npm run check:integration
 ```
 
 With Docker Desktop running, start and verify the full local stack:

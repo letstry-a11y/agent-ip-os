@@ -1,7 +1,7 @@
 # Core data model
 
-- Status: Ready for founder review
-- Version: 0.1 (conceptual; no migration yet)
+- Status: M1-01 implemented; founder review pending
+- Version: 1.0
 - Related: [MVP PRD](../product/prd-mvp.md), [content lifecycle](../specs/content-lifecycle.md), [ADR-0004](../adr/0004-postgresql-authority-and-deferred-vectors.md)
 
 ## Modeling rules
@@ -77,4 +77,41 @@ erDiagram
 
 ## Migration constraints for M1-01
 
-M1-01 must turn this conceptual model into the smallest schema needed for the M1 vertical slice, not create every future table blindly. It must include database constraints for immutable versions, unique request fingerprints where applicable, tenant/project scoping, outbox atomicity, and append-only audit behavior. Any name or relationship change updates this document before migration creation.
+M1-01 turns the conceptual model into the smallest authoritative schema needed for the M1
+vertical slice. The implemented physical tables are:
+
+| Family | M1-01 tables | Boundary |
+|---|---|---|
+| Project and content | `ip_projects`, `content_units`, `content_versions` | The unit holds mutable lifecycle/version counters; version payloads are immutable. |
+| Assets and rights | `artifacts`, `consent_grants`, `asset_rights` | PostgreSQL stores metadata and authority only; object bytes remain outside the database. |
+| Candidate | `platform_accounts`, `platform_candidates`, `platform_candidate_states`, `candidate_artifacts` | Frozen payload binds one immutable content version and ordered assets; lifecycle state has an independent compare-and-swap version. |
+| Approval | `approval_requests`, `approval_snapshots` | Requests may resolve; snapshots bind candidate/report/policy/account hashes and are immutable. |
+| Publish and audit | `publish_intents`, `outbox_messages`, `audit_events` | Fingerprints are unique, intent/outbox rows must coexist at transaction commit, and evidence rows are append-only. |
+
+Every tenant-bound primary entity carries `project_id`. Composite foreign keys prevent a
+row from referring to an entity in another project even when an opaque ID is known. UUIDs
+are application-supplied so M1-01 does not select a UUIDv7 extension prematurely. All
+stored timestamps use `timestamptz`; application schemas reject naive datetimes.
+
+`content_versions`, `artifacts`, `platform_candidates`, `candidate_artifacts`,
+`approval_snapshots`, `publish_intents`, and `audit_events` reject update and delete after
+M1-01 migration `0002`. Mutable lifecycle/status fields live on their owning request/state
+rows instead of mutating frozen payloads.
+
+Migration `0003` adds the explicit content-version binding that every platform candidate
+requires. It refuses to infer a version if a pre-release database already contains a
+candidate, because silently guessing the source version would create false approval evidence.
+
+`publish_intents.outbox_message_id` and `outbox_messages.publish_intent_id` form deferred,
+unique, project-scoped foreign keys. Both rows can be inserted in either order inside one
+transaction, but a transaction containing only one side cannot commit. The outbox delivery
+columns remain mutable for M1-04 dispatch/retry behavior.
+
+The audit table stores a per-project previous/event hash chain. Database constraints enforce
+one genesis event, an existing predecessor, no chain fork, and immutable rows. M4-03 remains
+responsible for recomputing hashes, access control, and WORM export.
+
+M1-01 deliberately defers agent/tool runs, derivation closure, fact/risk report bodies,
+platform attempts/posts, stop flags, metrics, comments, costs, and experiments to their
+own Backlog tasks. Approval snapshots reserve the final report hashes without treating
+unimplemented report tables as authoritative evidence.

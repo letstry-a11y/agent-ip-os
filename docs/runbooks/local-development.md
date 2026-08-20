@@ -13,7 +13,7 @@ The five services are:
 |---|---:|---|
 | Web | `http://127.0.0.1:3000` | Minimal local console |
 | API | `http://127.0.0.1:8000/healthz` | Control-plane health boundary |
-| PostgreSQL | `127.0.0.1:5432` | Future authoritative domain data |
+| PostgreSQL | `127.0.0.1:5432` | Authoritative transactional domain data |
 | Garage | `http://127.0.0.1:3900` | Local S3-compatible object storage |
 | Temporal | `127.0.0.1:7233`; UI `http://127.0.0.1:8233` | Local durable-workflow development server |
 
@@ -40,6 +40,27 @@ Verify again without rebuilding:
 ```powershell
 npm run stack:verify
 ```
+
+Apply all pending forward-only database migrations to the local development database:
+
+```powershell
+npm run db:migrate
+```
+
+The migrator records each filename and SHA-256 checksum in `schema_migrations`, takes a
+PostgreSQL advisory lock, and refuses changed or missing history. It never runs a down
+migration. Production execution remains a separately reviewed and explicitly authorized
+operation.
+
+Run the migration, integrity, project-isolation, immutability, and idempotency suite against
+short-lived databases on the local PostgreSQL service:
+
+```powershell
+npm run check:integration
+```
+
+Failure reports redact the database URL. The suite creates uniquely named test databases,
+terminates their remaining sessions, and removes the test databases when complete.
 
 Inspect, restart with persisted data, or stop while preserving volumes:
 
