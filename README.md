@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-04 are complete and accepted. M0-04 provides the pinned Python/Node workspace, a minimal API and web shell, locked dependencies, local quality gates, and a verified GitHub Actions workflow in the public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository. The protected `main` branch requires pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. The M0-05 Compose implementation is ready for host verification but remains blocked by the missing Docker/WSL2 prerequisites.
+M0-00 through M0-05 are complete. The repository has a pinned Python/Node workspace, minimal API and web shells, locked dependencies, local quality gates, hosted CI, and a verified five-service Docker Compose development stack. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M1 is the next implementation milestone; formal founder review of the M0-05 evidence remains to be recorded.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
@@ -48,7 +48,7 @@ Placeholder files preserve boundaries that have not yet entered implementation. 
 
 ## Local prerequisites
 
-The project pins uv `0.12.3`, uv-managed CPython `3.12.13`, Node `24` LTS, and npm `11`. The host's global Python 3.14 is not used by project commands. The Windows hypervisor is active, but Docker, WSL2, FFmpeg, and ffprobe remain unavailable. Full evidence and required follow-up are in the [environment inventory](docs/environment/m0-inventory.md).
+The project pins uv `0.12.3`, CPython `3.12.13`, Node `24` LTS, and npm `11`. The host's global Python 3.14 is not used by project commands. WSL2 and Docker Desktop are installed and the Linux-container development stack is verified; FFmpeg and ffprobe remain unavailable and will require separate authorization before M3-03. Full evidence and required follow-up are in the [environment inventory](docs/environment/m0-inventory.md).
 
 ## Commands
 
@@ -67,14 +67,14 @@ npm run check
 npm run build
 ```
 
-After Docker Desktop/WSL2 are installed and Docker Desktop is running, start and verify the full local stack:
+With Docker Desktop running, start and verify the full local stack:
 
 ```powershell
 npm run stack:up
 npm run stack:verify
 ```
 
-The command starts the API, web console, PostgreSQL 16, Garage S3-compatible local storage, and the Temporal development server/UI. See the [local development runbook](docs/runbooks/local-development.md) for endpoints, restart/stop commands, port overrides, credential handling, and the remaining M0-05 acceptance evidence.
+The command starts the API, web console, PostgreSQL 16, Garage S3-compatible local storage, and the Temporal development server/UI. See the [local development runbook](docs/runbooks/local-development.md) for endpoints, restart/stop commands, port overrides, credential handling, and the [M0-05 runtime evidence](docs/acceptance/m0-05-runtime.md).
 
 ## Safety
 

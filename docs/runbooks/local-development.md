@@ -68,11 +68,12 @@ npm run stack:verify
 Supported overrides are `API_PORT`, `WEB_PORT`, `POSTGRES_PORT`,
 `OBJECT_STORAGE_PORT`, `TEMPORAL_PORT`, and `TEMPORAL_UI_PORT`.
 
-## Acceptance evidence still required
+## Acceptance evidence
 
-M0-05 is not complete merely because the files exist. On the target host, record:
+M0-05 was verified on the target host on 2026-08-20. The durable command results,
+clean-checkout reproduction, versions, and resource snapshot are recorded in
+[the M0-05 runtime evidence](../acceptance/m0-05-runtime.md).
 
-1. successful `npm run stack:up` and `npm run stack:verify` output;
-2. successful `npm run stack:restart` followed by verification;
-3. a clean-checkout reproduction with newly generated local credentials;
-4. the Docker/WSL2 versions and approximate container memory/disk footprint.
+Repeat `stack:up`, `stack:verify`, and `stack:restart` after changes to Compose, images,
+health checks, or the host container runtime. Never copy the generated credential file
+between checkouts.
