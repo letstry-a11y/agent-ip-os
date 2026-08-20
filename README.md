@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-04 are complete and accepted. M0-04 provides the pinned Python/Node workspace, a minimal API and web shell, locked dependencies, local quality gates, and a verified GitHub Actions workflow in the public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository. The protected `main` branch requires pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M0-05 remains blocked by the missing Docker/WSL2 prerequisites.
+M0-00 through M0-04 are complete and accepted. M0-04 provides the pinned Python/Node workspace, a minimal API and web shell, locked dependencies, local quality gates, and a verified GitHub Actions workflow in the public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository. The protected `main` branch requires pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. The M0-05 Compose implementation is ready for host verification but remains blocked by the missing Docker/WSL2 prerequisites.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
@@ -29,6 +29,7 @@ The 12-week MVP delivers six combined Agent runtime units, image/text and one 30
 - [Content lifecycle](docs/specs/content-lifecycle.md): parent/child state machines and invariants.
 - [AI portrait authorization template](docs/rights/身份衍生虚拟AI肖像授权与撤回清单_v1.md): scoped consent, Provider, security, approval, and revocation checklist.
 - [Architecture decisions](docs/adr/README.md): accepted technical decisions.
+- [Local development stack](docs/runbooks/local-development.md): one-command Compose operations and acceptance procedure.
 - [M0 acceptance record](docs/acceptance/m0.md): evidence and remaining gate.
 
 ## Planned repository layout
@@ -47,7 +48,7 @@ Placeholder files preserve boundaries that have not yet entered implementation. 
 
 ## Local prerequisites
 
-The project pins uv `0.12.3`, uv-managed CPython `3.12.13`, Node `24` LTS, and npm `11`. The host's global Python 3.14 is not used by project commands. Docker, WSL2, FFmpeg, and ffprobe remain unavailable, and virtualization is unconfirmed. Full evidence and required follow-up are in the [environment inventory](docs/environment/m0-inventory.md).
+The project pins uv `0.12.3`, uv-managed CPython `3.12.13`, Node `24` LTS, and npm `11`. The host's global Python 3.14 is not used by project commands. The Windows hypervisor is active, but Docker, WSL2, FFmpeg, and ffprobe remain unavailable. Full evidence and required follow-up are in the [environment inventory](docs/environment/m0-inventory.md).
 
 ## Commands
 
@@ -66,14 +67,14 @@ npm run check
 npm run build
 ```
 
-For local development, start the current shells separately:
+After Docker Desktop/WSL2 are installed and Docker Desktop is running, start and verify the full local stack:
 
 ```powershell
-npm run dev:api
-npm run dev:web
+npm run stack:up
+npm run stack:verify
 ```
 
-The API health endpoint is `http://127.0.0.1:8000/healthz`; the web shell uses `http://127.0.0.1:3000`. One-command full-stack startup is deliberately deferred to M0-05 because the database, object storage, and Temporal containers do not exist yet.
+The command starts the API, web console, PostgreSQL 16, Garage S3-compatible local storage, and the Temporal development server/UI. See the [local development runbook](docs/runbooks/local-development.md) for endpoints, restart/stop commands, port overrides, credential handling, and the remaining M0-05 acceptance evidence.
 
 ## Safety
 

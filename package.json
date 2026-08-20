@@ -22,6 +22,12 @@
     "check:web": "npm run check --workspace @agent-ip/web",
     "dev:api": "uv run uvicorn agent_ip_api.main:app --reload --host 127.0.0.1 --port 8000",
     "dev:web": "npm run dev --workspace @agent-ip/web",
+    "stack:config": "uv run --locked python scripts/dev_stack.py config",
+    "stack:down": "uv run --locked python scripts/dev_stack.py down",
+    "stack:restart": "uv run --locked python scripts/dev_stack.py restart",
+    "stack:status": "uv run --locked python scripts/dev_stack.py status",
+    "stack:up": "uv run --locked python scripts/dev_stack.py up",
+    "stack:verify": "uv run --locked python scripts/dev_stack.py verify",
     "format": "uv run ruff format apps/api/src tests scripts && uv run ruff check --fix apps/api/src tests scripts && npm run format --workspace @agent-ip/web"
   }
 }

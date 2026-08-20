@@ -1,0 +1,16 @@
+.git
+.github
+.mypy_cache
+.next
+.pytest-tmp
+.ruff_cache
+.runtime
+.tools
+.venv
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.log
+docs
+tests

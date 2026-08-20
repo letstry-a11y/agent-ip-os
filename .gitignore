@@ -30,6 +30,7 @@ coverage/
 *.tsbuildinfo
 
 # Build and runtime artifacts
+.runtime/
 dist/
 build/
 tmp/
