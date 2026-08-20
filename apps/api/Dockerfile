@@ -19,7 +19,7 @@ COPY pyproject.toml uv.lock .python-version ./
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
 COPY apps/api/src apps/api/src
 
-RUN uv sync --locked --no-dev \
+RUN uv sync --locked --no-dev --python /usr/local/bin/python3.12 --no-managed-python --no-python-downloads \
     && groupadd --system agent-ip \
     && useradd --system --gid agent-ip --home-dir /nonexistent --shell /usr/sbin/nologin agent-ip
 
