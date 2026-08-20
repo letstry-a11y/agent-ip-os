@@ -7,13 +7,13 @@
 
 ## Summary
 
-The host has enough preliminary CPU, memory, and workspace disk capacity for local MVP development, but it is not ready for the planned container/media stack. Docker, WSL2, FFmpeg, and ffprobe are unavailable. A 2026-08-20 read-only follow-up confirmed that Windows detects an active hypervisor and virtualization-based security is running. The installed Python 3.14 is not the project target (Python 3.12).
+The host has sufficient preliminary CPU, memory, and workspace disk capacity for local MVP development. After explicit founder authorization on 2026-08-20, WSL2 and Docker Desktop were installed and the local five-service container stack passed M0-05 acceptance. FFmpeg and ffprobe remain unavailable. The installed global Python 3.14 is not the project target (Python 3.12).
 
 | Area | Observed result | Classification | Required follow-up |
 |---|---|---|---|
 | Operating system | Microsoft Windows build `10.0.26200`, x64 OS/process | Present | Confirm supported Docker/WSL path during M0-04/05. |
-| WSL2 | `wsl --status`, `--version`, and `--list --verbose` report that Windows Subsystem for Linux is not installed/enabled | Missing | Human-authorized Windows feature/distro installation if Docker/Temporal toolchain requires it. |
-| Docker / Compose | `docker` command not found | Missing | Human-authorized Docker Desktop or approved alternative installation; do not install in this task. |
+| WSL2 | WSL `2.7.12.0`, kernel `6.18.33.2-2`; default version 2 | Present | Keep the Docker WSL2 backend current; no general-purpose Linux distribution was required for M0-05. |
+| Docker / Compose | Docker Desktop `4.87.0`, Engine/CLI `29.7.2`, Compose `v5.4.0`, Linux containers via WSL2 | Present | Keep Docker Desktop running for stack commands. |
 | Virtualization | 2026-08-20 `systeminfo` reports that a hypervisor is detected; virtualization-based security is running | Present | The base virtualization prerequisite is satisfied; WSL2/Docker installation still requires explicit machine-change authority. |
 | Python | Global `3.14.5`; project-isolated uv-managed `3.12.13` | Present | Use only the pinned project runtime for repository commands. |
 | Node.js | `v24.15.0`; repository pins Node 24 LTS | Present | Keep within the pinned Node 24 engine range. |
@@ -33,7 +33,7 @@ The host has enough preliminary CPU, memory, and workspace disk capacity for loc
 | `E:` (workspace) | 500.00 GiB total, 468.76 GiB free | Sufficient for development and synthetic media fixtures. |
 | `F:` | 300.00 GiB total, 299.85 GiB free | Sufficient but outside the current workspace scope. |
 
-This is a capacity signal, not a load test. M0-05 must measure actual container memory and disk consumption after the stack exists.
+This is a capacity signal, not a load test. M0-05 subsequently measured approximately 177 MiB across the five idle containers, 49.9 MB in four local volumes, and 1.392 GB across the five active images; see [runtime evidence](../acceptance/m0-05-runtime.md).
 
 ## Planned local ports
 
@@ -52,9 +52,7 @@ Port availability is time-sensitive. M0-05 must recheck before binding and allow
 
 ## Missing items that require human authorization
 
-1. Enable/install the approved Windows WSL2 prerequisites.
-2. Install Docker Desktop or explicitly approve a different local container runtime.
-3. Install FFmpeg/ffprobe before the video-template task.
+1. Install FFmpeg/ffprobe before the video-template task.
 
 No Provider SDK, platform credential, cloud resource, database service, or media binary was installed or contacted.
 
@@ -62,12 +60,12 @@ No Provider SDK, platform credential, cloud resource, database service, or media
 
 With founder authorization for local M0-04 setup, the repository now uses a project-isolated uv-managed CPython `3.12.13` runtime and uv `0.12.3`; the global Python 3.14 installation remains untouched. The existing Node `24.15.0` and npm `11.12.1` satisfy the pinned Node 24/npm 11 lines. Dependency state is captured by `uv.lock` and `package-lock.json` and restored with locked-install commands.
 
-This amendment originally changed only the Python/Node development toolchain classification. A second read-only check on 2026-08-20 changed virtualization from unconfirmed to present. Docker, WSL2, FFmpeg/ffprobe, Provider credentials, and external platform access remain missing or unauthorized.
+This amendment originally changed only the Python/Node development toolchain classification. A second read-only check on 2026-08-20 changed virtualization from unconfirmed to present. A later founder-authorized machine change installed WSL2 and Docker Desktop for M0-05. FFmpeg/ffprobe, Provider credentials, and external platform access remain missing or unauthorized.
 
 ## Limitations
 
 - The original restricted-account capture could not confirm virtualization. The later
   `systeminfo` result confirms an active hypervisor but does not separately inventory each
   optional Windows feature.
-- WSL output was UTF-16/mojibake in the capture shell, but all three queries consistently returned the standard “WSL is not installed; run `wsl.exe --install`” message. No install command was run.
+- The original WSL queries reported that WSL was absent. The later authorized installation supersedes that observation; some `wsl.exe` output still renders as UTF-16/mojibake in the capture shell, so numeric versions were cross-checked separately.
 - Tool discovery reflects the current sandbox `PATH`; a binary installed elsewhere but not exposed to this account would remain classified as unavailable.
