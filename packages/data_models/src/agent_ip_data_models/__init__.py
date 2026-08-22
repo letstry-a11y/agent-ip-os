@@ -54,6 +54,17 @@ from agent_ip_data_models.mocks import (
     MockScenario,
     MockUsageV1,
 )
+from agent_ip_data_models.providers import (
+    ProviderErrorCode,
+    ProviderFailureV1,
+    ProviderJobStatus,
+    ProviderJobV1,
+    ProviderKind,
+    ProviderProvenanceV1,
+    ProviderRateLimitV1,
+    ProviderRequestV1,
+    ProviderUsageV1,
+)
 
 __all__ = [
     "ApprovalActorType",
@@ -102,4 +113,13 @@ __all__ = [
     "MockResultV1",
     "MockScenario",
     "MockUsageV1",
+    "ProviderErrorCode",
+    "ProviderFailureV1",
+    "ProviderJobStatus",
+    "ProviderJobV1",
+    "ProviderKind",
+    "ProviderProvenanceV1",
+    "ProviderRateLimitV1",
+    "ProviderRequestV1",
+    "ProviderUsageV1",
 ]

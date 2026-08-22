@@ -16,10 +16,10 @@
     "check:integration": "uv run --locked pytest tests/integration",
     "check:repo": "uv run --locked python scripts/check_repo.py",
     "check:python": "npm run check:python:format && npm run check:python:lint && npm run check:python:types && npm run check:python:test",
-    "check:python:format": "uv run --locked ruff format --check apps/api/src packages/data_models/src packages/workflows/src tests scripts",
-    "check:python:lint": "uv run --locked ruff check apps/api/src packages/data_models/src packages/workflows/src tests scripts",
-    "check:python:types": "uv run --locked mypy apps/api/src packages/data_models/src packages/workflows/src scripts",
-    "check:python:test": "uv run --locked pytest tests/unit tests/workflow tests/integration --cov=agent_ip_api --cov=agent_ip_data_models --cov=agent_ip_workflows --cov-report=term-missing --cov-fail-under=100",
+    "check:python:format": "uv run --locked ruff format --check apps/api/src packages/agent_runtime/src packages/data_models/src packages/workflows/src tests scripts",
+    "check:python:lint": "uv run --locked ruff check apps/api/src packages/agent_runtime/src packages/data_models/src packages/workflows/src tests scripts",
+    "check:python:types": "uv run --locked mypy apps/api/src packages/agent_runtime/src packages/data_models/src packages/workflows/src scripts",
+    "check:python:test": "uv run --locked pytest tests/unit tests/workflow tests/integration --cov=agent_ip_agent_runtime --cov=agent_ip_api --cov=agent_ip_data_models --cov=agent_ip_workflows --cov-report=term-missing --cov-fail-under=100",
     "check:web": "npm run check --workspace @agent-ip/web",
     "dev:api": "uv run uvicorn agent_ip_api.main:app --reload --host 127.0.0.1 --port 8000",
     "dev:web": "npm run dev --workspace @agent-ip/web",
@@ -30,6 +30,6 @@
     "stack:status": "uv run --locked python scripts/dev_stack.py status",
     "stack:up": "uv run --locked python scripts/dev_stack.py up",
     "stack:verify": "uv run --locked python scripts/dev_stack.py verify",
-    "format": "uv run ruff format apps/api/src packages/data_models/src packages/workflows/src tests scripts && uv run ruff check --fix apps/api/src packages/data_models/src packages/workflows/src tests scripts && npm run format --workspace @agent-ip/web"
+    "format": "uv run ruff format apps/api/src packages/agent_runtime/src packages/data_models/src packages/workflows/src tests scripts && uv run ruff check --fix apps/api/src packages/agent_runtime/src packages/data_models/src packages/workflows/src tests scripts && npm run format --workspace @agent-ip/web"
   }
 }

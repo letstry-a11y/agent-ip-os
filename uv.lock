@@ -4,11 +4,23 @@ requires-python = "==3.12.*"
 
 [manifest]
 members = [
+    "agent-ip-agent-runtime",
     "agent-ip-api",
     "agent-ip-data-models",
     "agent-ip-os-workspace",
     "agent-ip-workflows",
 ]
+
+[[package]]
+name = "agent-ip-agent-runtime"
+version = "0.1.0"
+source = { editable = "packages/agent_runtime" }
+dependencies = [
+    { name = "agent-ip-data-models" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "agent-ip-data-models", editable = "packages/data_models" }]
 
 [[package]]
 name = "agent-ip-api"
@@ -47,6 +59,7 @@ name = "agent-ip-os-workspace"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "agent-ip-agent-runtime" },
     { name = "agent-ip-api" },
     { name = "agent-ip-data-models" },
     { name = "agent-ip-workflows" },
@@ -64,6 +77,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-ip-agent-runtime", editable = "packages/agent_runtime" },
     { name = "agent-ip-api", editable = "apps/api" },
     { name = "agent-ip-data-models", editable = "packages/data_models" },
     { name = "agent-ip-workflows", editable = "packages/workflows" },

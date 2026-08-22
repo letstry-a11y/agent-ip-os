@@ -1,0 +1,16 @@
+[project]
+name = "agent-ip-agent-runtime"
+version = "0.1.0"
+description = "Provider-neutral runtime interfaces and deterministic Mocks for Agent IP OS"
+requires-python = "==3.12.*"
+dependencies = ["agent-ip-data-models"]
+
+[tool.uv.sources]
+agent-ip-data-models = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_ip_agent_runtime"]
