@@ -2,7 +2,7 @@
 
 - Status: M1-03 implemented; founder review pending
 - Version: 1.0
-- Normative for: candidate hashes, report hashes, approval snapshots, and later request fingerprints
+- Normative for: candidate hashes, report hashes, approval snapshots, and request fingerprints
 - Related: [content lifecycle](content-lifecycle.md), [core data model](../architecture/data-model.md)
 
 ## Purpose and boundary
@@ -64,6 +64,28 @@ The schedule is deliberately excluded from `candidate_hash`; M1-04 binds the nor
 schedule slot into `request_fingerprint`. Changing title, caption, normalized tags, ordered
 asset hashes, disclosure, platform, account, or policy version produces a different
 candidate hash and requires a new immutable candidate.
+
+## Publish request fingerprint
+
+One logical external action is identified by this canonical payload:
+
+```json
+{
+  "account_id": "lowercase UUID",
+  "candidate_hash": "sha256",
+  "normalized_schedule_slot": "UTC RFC 3339 milliseconds",
+  "platform": "platform capability key",
+  "schema_version": 1
+}
+```
+
+`request_fingerprint = sha256(canonical_json(publish_request_payload))`.
+
+The service recomputes this value from authoritative candidate/account data before creating
+an intent and again before dispatch. Concurrent commands with the same fingerprint and
+semantic binding converge on the first committed intent even when callers propose different
+intent/outbox UUIDs. A fingerprint collision with a different candidate, approval snapshot,
+account, or schedule fails closed.
 
 ## Approval snapshot hash
 

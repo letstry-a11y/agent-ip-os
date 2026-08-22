@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-05, M1-01, and M1-03 are complete; M1-02 is implemented and awaiting hosted review. The repository has a pinned Python/Node workspace, minimal API and web shells, locked dependencies, local quality gates, hosted CI, a verified six-service Docker Compose development stack, shared versioned domain contracts, forward-only PostgreSQL migrations, a cross-runtime canonical-hash contract, and durable Temporal parent/child workflows backed by PostgreSQL Activities. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. Formal founder review of the M1 workflow/approval boundary remains to be recorded.
+M0-00 through M0-05 and M1-01 through M1-03 are complete; M1-04 is in progress. The repository has a pinned Python/Node workspace, minimal API and web shells, locked dependencies, local quality gates, hosted CI, a verified six-service Docker Compose development stack, shared versioned domain contracts, forward-only PostgreSQL migrations, a cross-runtime canonical-hash contract, and durable Temporal parent/child workflows backed by PostgreSQL Activities. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M1-02 is accepted; M1-04 has not authorized any real external action.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
@@ -36,6 +36,7 @@ The 12-week MVP delivers six combined Agent runtime units, image/text and one 30
 - [M1-01 schema evidence](docs/acceptance/m1-01-core-schema.md): migrations, invariants, and real-PostgreSQL verification.
 - [M1-02 Temporal evidence](docs/acceptance/m1-02-temporal-workflow.md): restart recovery, terminal/retry matrix, real Activities, and six-service runtime.
 - [M1-03 canonical-hash evidence](docs/acceptance/m1-03-canonical-hash.md): cross-runtime vectors, invalidation tests, and database guard.
+- [M1-04 publish-dispatch evidence](docs/acceptance/m1-04-publish-dispatch.md): request deduplication, short leases, stop races, and UNKNOWN reconciliation.
 
 ## Planned repository layout
 

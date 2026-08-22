@@ -1,6 +1,6 @@
 # Temporal content workflow v1
 
-- Status: Implemented for M1-02; hosted review pending
+- Status: Implemented and accepted for M1-02
 - Version: 1.0
 - Queue: `agent-ip-content-v1`
 - Safety boundary: Mock publish only; no Provider or platform network call
@@ -55,16 +55,18 @@ Terminal paths are:
 ## Activities and retry semantics
 
 Workflow code is deterministic and performs no database or network I/O. PostgreSQL
-Activities perform versioned state transitions and create the publish intent plus outbox
-message in one transaction. A retry is accepted as already committed only when the complete
-intent binding is identical: intent/outbox IDs, candidate, approval snapshot, account,
-request fingerprint, and normalized schedule slot. Any mismatch fails closed.
+Activities perform versioned state transitions and create the publish intent, outbox
+message, and ready publish job in one transaction. Exact Activity retries return the prior
+commit. Concurrent commands for the same recomputed request fingerprint converge on the
+first committed intent only when candidate, approval snapshot, account, and schedule are
+semantically identical; any mismatch fails closed.
 
 Activities use at most three attempts with bounded exponential backoff. The current
-`mock_publish` Activity validates the command identity and returns success without network
-access. Unknown outcomes are never automatically resent. M1-04 adds leasing, stop flags,
-concurrent intent deduplication, and reconciliation ownership; M1-05 expands the behavioral
-Mock failure matrix.
+`mock_publish` obtains a five-second job lease, revalidates approval/account bindings and
+global/account stop controls immediately before the network-free Mock boundary, and records
+one attempt. `UNKNOWN` consumes the outbox message into `RECONCILIATION_REQUIRED`; later
+dispatch calls return that state without resending. M1-05 expands the behavioral Mock
+failure matrix.
 
 ## Runtime boundary
 

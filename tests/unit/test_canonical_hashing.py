@@ -15,6 +15,7 @@ from agent_ip_data_models import (
     ApprovalSnapshotV1,
     CandidateHashInputV1,
     CanonicalJsonError,
+    PublishRequestFingerprintInputV1,
     approval_snapshot_hash,
     approval_snapshot_payload,
     candidate_hash,
@@ -25,6 +26,8 @@ from agent_ip_data_models import (
     evaluate_approval,
     hash_canonical_json,
     normalize_sorted_tags,
+    publish_request_fingerprint,
+    publish_request_payload,
 )
 from pydantic import ValidationError
 
@@ -162,6 +165,23 @@ def test_time_normalization_is_utc_millisecond_and_lossless() -> None:
         canonical_utc_milliseconds(value.replace(tzinfo=None))
     with pytest.raises(CanonicalJsonError, match="sub-millisecond"):
         canonical_utc_milliseconds(value.replace(microsecond=123001))
+
+
+def test_publish_request_fingerprint_binds_logical_external_action() -> None:
+    material = PublishRequestFingerprintInputV1(
+        candidate_hash="12" * 32,
+        platform="xiaohongshu_pack",
+        account_id=UUID("44444444-4444-4444-8444-444444444444"),
+        normalized_schedule_slot=datetime(
+            2026, 8, 22, 10, 0, 0, tzinfo=timezone(timedelta(hours=8))
+        ),
+    )
+    payload = publish_request_payload(material)
+    assert payload["normalized_schedule_slot"] == "2026-08-22T02:00:00.000Z"
+    baseline = publish_request_fingerprint(material)
+    assert baseline.sha256 == hash_canonical_json(payload).sha256
+    changed = material.model_copy(update={"platform": "another-platform"})
+    assert publish_request_fingerprint(changed).sha256 != baseline.sha256
 
 
 def test_approval_validity_fails_closed_for_every_bound_change() -> None:

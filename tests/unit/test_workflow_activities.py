@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID
 
 import agent_ip_workflows.activities as activities_module
 import pytest
+from agent_ip_data_models import (
+    PublishRequestFingerprintInputV1,
+    publish_request_fingerprint,
+)
 from agent_ip_workflows.activities import (
     PostgresWorkflowActivities,
     _digest,
@@ -14,7 +20,14 @@ from agent_ip_workflows.activities import (
     activity_functions,
     mock_publish,
 )
-from agent_ip_workflows.models import IntentCommand, PublishOutcome, StateTransition
+from agent_ip_workflows.models import (
+    IntentCommand,
+    PublishOutcome,
+    StateTransition,
+    StopCommand,
+    StopScope,
+)
+from agent_ip_workflows.publishing import _parse_timestamp
 from temporalio.exceptions import ApplicationError
 
 PROJECT_ID = "11111111-1111-4111-8111-111111111111"
@@ -63,6 +76,15 @@ def _transition(target: str = "FACT_CHECK") -> StateTransition:
 
 
 def _intent() -> IntentCommand:
+    schedule = "2026-08-22T02:00:00.000Z"
+    fingerprint = publish_request_fingerprint(
+        PublishRequestFingerprintInputV1(
+            candidate_hash="11" * 32,
+            platform="mock",
+            account_id=UUID("44444444-4444-4444-8444-444444444444"),
+            normalized_schedule_slot=datetime(2026, 8, 22, 2, tzinfo=UTC),
+        )
+    ).sha256
     return IntentCommand(
         project_id=PROJECT_ID,
         candidate_id=RESOURCE_ID,
@@ -70,8 +92,8 @@ def _intent() -> IntentCommand:
         account_id="44444444-4444-4444-8444-444444444444",
         intent_id="55555555-5555-4555-8555-555555555555",
         outbox_id="66666666-6666-4666-8666-666666666666",
-        request_fingerprint="ab" * 32,
-        normalized_schedule_slot="2026-08-22T02:00:00.000Z",
+        request_fingerprint=fingerprint,
+        normalized_schedule_slot=schedule,
     )
 
 
@@ -85,11 +107,13 @@ def test_boundary_parsers_and_activity_registry() -> None:
         _digest("zz" * 32)
     with pytest.raises(ValueError, match="UTC offset"):
         _timestamp("2026-08-22T02:00:00")
+    with pytest.raises(ValueError, match="UTC offset"):
+        _parse_timestamp("2026-08-22T02:00:00")
     with pytest.raises(ValueError, match="must not be blank"):
         PostgresWorkflowActivities(" ")
 
     instance = PostgresWorkflowActivities("postgresql://test")
-    assert len(activity_functions(instance)) == 4
+    assert len(activity_functions(instance)) == 5
     assert asyncio.run(mock_publish(_intent())) == PublishOutcome.SUCCEEDED.value
     with pytest.raises(ValueError):
         asyncio.run(mock_publish(_intent().__class__(**{**_intent().__dict__, "intent_id": "bad"})))
@@ -135,23 +159,104 @@ def test_intent_activity_is_atomic_idempotent_and_conflict_safe(
         _timestamp(command.normalized_schedule_slot),
     )
 
-    existing = FakeConnection([expected])
+    existing = FakeConnection([None, expected])
     monkeypatch.setattr(
         activities_module.psycopg.AsyncConnection, "connect", _connect_factory(existing)
     )
-    assert asyncio.run(instance.create_publish_intent_and_outbox(command)) is None
-    assert len(existing.executions) == 1
+    assert asyncio.run(instance.create_publish_intent_and_outbox(command)) == command
+    assert len(existing.executions) == 2
 
-    conflict = FakeConnection([(expected[0], expected[0], expected[2], expected[3])])
+    conflict = FakeConnection([None, (expected[0], expected[0], expected[2], expected[3])])
     monkeypatch.setattr(
         activities_module.psycopg.AsyncConnection, "connect", _connect_factory(conflict)
     )
     with pytest.raises(ApplicationError, match="bound differently"):
         asyncio.run(instance.create_publish_intent_and_outbox(command))
 
-    inserted = FakeConnection([None, None, None])
+    candidate_hash = bytes.fromhex("11" * 32)
+    account_hash = bytes.fromhex("22" * 32)
+    gate = (
+        candidate_hash,
+        "mock",
+        "policy-v1",
+        "APPROVED",
+        candidate_hash,
+        "policy-v1",
+        account_hash,
+        datetime(2099, 1, 1, tzinfo=UTC),
+        "APPROVED",
+        "ACTIVE",
+        account_hash,
+        "APPROVED",
+        False,
+    )
+    inserted = FakeConnection([None, None, None, gate, None, None, None])
     monkeypatch.setattr(
         activities_module.psycopg.AsyncConnection, "connect", _connect_factory(inserted)
     )
-    assert asyncio.run(instance.create_publish_intent_and_outbox(command)) is None
-    assert len(inserted.executions) == 3
+    assert asyncio.run(instance.create_publish_intent_and_outbox(command)) == command
+    assert len(inserted.executions) == 7
+
+    equivalent_row = (expected[0], expected[1], *expected[4:])
+    equivalent = FakeConnection([None, None, equivalent_row])
+    monkeypatch.setattr(
+        activities_module.psycopg.AsyncConnection, "connect", _connect_factory(equivalent)
+    )
+    assert asyncio.run(instance.create_publish_intent_and_outbox(command)) == command
+
+    equivalent_conflict = FakeConnection(
+        [None, None, (*equivalent_row[:-1], datetime(2099, 1, 1, tzinfo=UTC))]
+    )
+    monkeypatch.setattr(
+        activities_module.psycopg.AsyncConnection,
+        "connect",
+        _connect_factory(equivalent_conflict),
+    )
+    with pytest.raises(ApplicationError, match="fingerprint is already bound"):
+        asyncio.run(instance.create_publish_intent_and_outbox(command))
+
+    missing_gate = FakeConnection([None, None, None, None])
+    monkeypatch.setattr(
+        activities_module.psycopg.AsyncConnection,
+        "connect",
+        _connect_factory(missing_gate),
+    )
+    with pytest.raises(ApplicationError, match="boundary is missing"):
+        asyncio.run(instance.create_publish_intent_and_outbox(command))
+
+    invalid_gate = FakeConnection([None, None, None, (*gate[:-1], True)])
+    monkeypatch.setattr(
+        activities_module.psycopg.AsyncConnection,
+        "connect",
+        _connect_factory(invalid_gate),
+    )
+    with pytest.raises(ApplicationError, match="failed revalidation"):
+        asyncio.run(instance.create_publish_intent_and_outbox(command))
+
+
+def test_publish_and_stop_activity_methods_delegate_to_dispatcher() -> None:
+    instance = PostgresWorkflowActivities("postgresql://test")
+
+    class FakeDispatcher:
+        async def set_stop(self, _: StopCommand) -> int:
+            return 7
+
+        async def dispatch(self, command: IntentCommand, publisher: object) -> PublishOutcome:
+            assert command == _intent()
+            assert publisher is activities_module._mock_publisher
+            return PublishOutcome.UNKNOWN
+
+    instance._dispatcher = FakeDispatcher()  # type: ignore[assignment]
+    stop = StopCommand(
+        control_id="77777777-7777-4777-8777-777777777777",
+        project_id=PROJECT_ID,
+        scope=StopScope.GLOBAL,
+        account_id=None,
+        stopped=True,
+        reason="test",
+        expected_version=-1,
+        updated_by_subject_id="88888888-8888-4888-8888-888888888888",
+    )
+    assert asyncio.run(instance.set_publish_stop(stop)) == 7
+    assert asyncio.run(instance.dispatch_mock_publish(_intent())) == PublishOutcome.UNKNOWN.value
+    assert asyncio.run(activities_module._mock_publisher(_intent())) is PublishOutcome.SUCCEEDED

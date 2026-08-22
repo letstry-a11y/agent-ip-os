@@ -1,7 +1,7 @@
 # M1-02 Temporal workflow evidence
 
 - Captured: 2026-08-22 (Asia/Shanghai)
-- Result: **PASS locally / READY FOR HOSTED REVIEW**
+- Result: **PASS / DONE**
 - Safety boundary: local Temporal/PostgreSQL and network-free Mock publish only; no Provider,
   platform account, cloud resource, browser automation, or publication was contacted
 
@@ -34,11 +34,14 @@ or outbox identity fails closed. The publish boundary is a deterministic, networ
 6. The Web container now receives only the shared canonical-hash golden JSON fixture needed
    by its build-time type check, closing the M1-03 clean-container build gap.
 
-Hosted CI and protected-branch merge evidence will be added before M1-02 is marked `DONE`.
+[Pull request #6](https://github.com/letstry-a11y/agent-ip-os/pull/6) passed its required
+`quality` check and squash-merged into protected `main` as `abf7f27`. The resulting
+[main CI run #16](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32558714566)
+completed successfully in 1 minute 32 seconds.
 
 ## Human review boundary
 
-Review should confirm that (1) one authorized human decision is sufficient for early/MVP
+This task's acceptance confirms that (1) one authorized human decision is sufficient for early/MVP
 content while T3 production actions remain disabled, (2) the API must authenticate,
 authorize, revalidate, and audit before signaling Temporal, (3) `RECONCILIATION_REQUIRED`
 never auto-retries a possibly accepted external action, and (4) M1-04 remains responsible

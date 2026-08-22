@@ -11,6 +11,30 @@ class PublishOutcome(StrEnum):
 
     SUCCEEDED = "SUCCEEDED"
     UNKNOWN = "UNKNOWN"
+    FAILED = "FAILED"
+    STOPPED = "STOPPED"
+    BUSY = "BUSY"
+
+
+class StopScope(StrEnum):
+    """Authoritative scopes checked immediately before an external request."""
+
+    GLOBAL = "GLOBAL"
+    ACCOUNT = "ACCOUNT"
+
+
+@dataclass(frozen=True)
+class StopCommand:
+    """Stop CAS command; version -1 creates, while zero and above update."""
+
+    control_id: str
+    project_id: str
+    scope: StopScope
+    account_id: str | None
+    stopped: bool
+    reason: str | None
+    expected_version: int
+    updated_by_subject_id: str
 
 
 @dataclass(frozen=True)
