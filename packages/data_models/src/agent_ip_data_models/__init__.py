@@ -1,5 +1,12 @@
 """Versioned public domain schemas."""
 
+from agent_ip_data_models.agents import (
+    AgentContractSetV1,
+    AgentContractV1,
+    AgentRetryPolicyV1,
+    AgentUnitId,
+    ModelTier,
+)
 from agent_ip_data_models.approvals import (
     ApprovalActorType,
     ApprovalActorV1,
@@ -67,6 +74,10 @@ from agent_ip_data_models.providers import (
 )
 
 __all__ = [
+    "AgentContractSetV1",
+    "AgentContractV1",
+    "AgentRetryPolicyV1",
+    "AgentUnitId",
     "ApprovalActorType",
     "ApprovalActorV1",
     "ApprovalBindingViewV1",
@@ -113,6 +124,7 @@ __all__ = [
     "MockResultV1",
     "MockScenario",
     "MockUsageV1",
+    "ModelTier",
     "ProviderErrorCode",
     "ProviderFailureV1",
     "ProviderJobStatus",
