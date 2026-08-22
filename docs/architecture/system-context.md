@@ -1,7 +1,7 @@
 # System context and trust boundaries
 
-- Status: Ready for founder review
-- Version: 0.1
+- Status: M1-02 local workflow runtime implemented; founder review pending
+- Version: 0.2
 - Related: [MVP PRD](../product/prd-mvp.md), [content lifecycle](../specs/content-lifecycle.md), [data model](data-model.md)
 
 ## Context
@@ -79,7 +79,7 @@ flowchart TB
 
 ## Logical runtime and deployment boundary
 
-The MVP is a modular monolith deployed as a small set of processes: web console, API, Temporal worker(s), and media worker, backed by PostgreSQL, Temporal service, and S3-compatible storage. Module boundaries are code and schema boundaries, not network microservices. Local development uses Docker Compose after M0-05; production topology is deliberately not selected in M0.
+The MVP is a modular monolith deployed as a small set of processes: web console, API, Temporal worker(s), and media worker, backed by PostgreSQL, Temporal service, and S3-compatible storage. Module boundaries are code and schema boundaries, not network microservices. The local M1 stack runs a non-root, read-only workflow-worker on queue `agent-ip-content-v1`; it refuses non-dry-run operation and exposes no platform adapter. Local development uses Docker Compose after M0-05; production topology is deliberately not selected in M0.
 
 Redis, pgvector, full Prometheus/Grafana, Kubernetes, Kafka, and a data warehouse are not MVP prerequisites. If a cache is introduced later, it cannot become a business source of truth.
 

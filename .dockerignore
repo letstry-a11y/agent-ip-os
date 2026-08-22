@@ -13,4 +13,7 @@ __pycache__
 *.pyo
 *.log
 docs
-tests
+tests/*
+!tests/fixtures
+tests/fixtures/*
+!tests/fixtures/canonical-json-v1.json

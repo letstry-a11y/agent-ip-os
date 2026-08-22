@@ -12,6 +12,7 @@ RUN npm ci --ignore-scripts
 FROM dependencies AS builder
 
 COPY apps/web apps/web
+COPY tests/fixtures/canonical-json-v1.json tests/fixtures/canonical-json-v1.json
 RUN npm run build --workspace @agent-ip/web
 
 FROM node:24.17.0-bookworm-slim AS runtime

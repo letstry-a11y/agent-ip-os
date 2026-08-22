@@ -6,6 +6,7 @@ requires-python = "==3.12.*"
 dependencies = [
   "agent-ip-api",
   "agent-ip-data-models",
+  "agent-ip-workflows",
   "psycopg[binary]>=3.2,<4",
 ]
 
@@ -26,9 +27,10 @@ python-preference = "only-managed"
 [tool.uv.sources]
 agent-ip-api = { workspace = true }
 agent-ip-data-models = { workspace = true }
+agent-ip-workflows = { workspace = true }
 
 [tool.uv.workspace]
-members = ["apps/api", "packages/data_models"]
+members = ["apps/api", "packages/data_models", "packages/workflows"]
 
 [tool.ruff]
 target-version = "py312"
@@ -55,7 +57,7 @@ addopts = "--strict-config --strict-markers --basetemp=.pytest-tmp"
 
 [tool.coverage.run]
 branch = true
-source = ["agent_ip_api", "agent_ip_data_models"]
+source = ["agent_ip_api", "agent_ip_data_models", "agent_ip_workflows"]
 
 [tool.coverage.report]
 show_missing = true

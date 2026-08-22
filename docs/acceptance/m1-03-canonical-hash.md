@@ -1,7 +1,7 @@
 # M1-03 canonical hash and approval evidence
 
 - Captured: 2026-08-22 (Asia/Shanghai)
-- Result: **PASS locally / READY FOR HOSTED REVIEW**
+- Result: **PASS / DONE**
 - Safety boundary: deterministic local code and isolated local PostgreSQL databases only;
   no Provider, platform account, cloud resource, outbox action, or publication was contacted
 
@@ -41,8 +41,10 @@ identity while content identity remains stable.
 6. The local Compose verification reported PostgreSQL, Garage, Temporal, API, and Web all
    healthy; external side effects remained disabled.
 
-Hosted CI and protected-branch merge evidence will be added before this item is marked
-`DONE`.
+[Pull request #5](https://github.com/letstry-a11y/agent-ip-os/pull/5) passed its required
+check and merged into protected `main` as `b2b0a36`. The resulting
+[main CI run #14](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32543879395)
+completed successfully in 1 minute 9 seconds.
 
 ## Human review boundary
 

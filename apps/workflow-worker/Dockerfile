@@ -19,15 +19,13 @@ COPY pyproject.toml uv.lock .python-version ./
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
 COPY packages/data_models/pyproject.toml packages/data_models/pyproject.toml
 COPY packages/workflows/pyproject.toml packages/workflows/pyproject.toml
-COPY apps/api/src apps/api/src
 COPY packages/data_models/src packages/data_models/src
+COPY packages/workflows/src packages/workflows/src
 
-RUN uv sync --locked --no-dev --package agent-ip-api --python /usr/local/bin/python3.12 --no-managed-python --no-python-downloads \
+RUN uv sync --locked --no-dev --package agent-ip-workflows --python /usr/local/bin/python3.12 --no-managed-python --no-python-downloads \
     && groupadd --system agent-ip \
     && useradd --system --gid agent-ip --home-dir /nonexistent --shell /usr/sbin/nologin agent-ip
 
 USER agent-ip
 
-EXPOSE 8000
-
-CMD ["uvicorn", "agent_ip_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "agent_ip_workflows.worker"]
