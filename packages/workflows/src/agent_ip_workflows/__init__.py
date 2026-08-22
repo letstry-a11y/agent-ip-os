@@ -1,5 +1,11 @@
 """Durable workflow public boundary."""
 
+from agent_ip_workflows.mock_boundaries import (
+    MockAgentAdapter,
+    MockBoundaryFailure,
+    MockMediaAdapter,
+    MockPlatformAdapter,
+)
 from agent_ip_workflows.models import (
     ApprovalResolution,
     CandidateWorkflowInput,
@@ -21,4 +27,8 @@ __all__ = [
     "IntentCommand",
     "PlatformCandidateWorkflow",
     "PublishOutcome",
+    "MockAgentAdapter",
+    "MockBoundaryFailure",
+    "MockMediaAdapter",
+    "MockPlatformAdapter",
 ]

@@ -1,7 +1,7 @@
 # M1-04 publish dispatch evidence
 
 - Captured: 2026-08-22 (Asia/Shanghai)
-- Result: **PASS / READY FOR REVIEW**
+- Result: **PASS / ACCEPTED**
 - Safety boundary: isolated PostgreSQL databases and a network-free Mock publisher only
 
 ## Implemented
@@ -35,10 +35,14 @@ coverage, repository/web checks, Compose validation, and the production web buil
 implementation [hosted CI run #18](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32569912896)
 completed successfully in 1 minute 30 seconds.
 
-## Human review boundary
+## Human acceptance
 
-The reviewer should confirm that the final pre-request gate is the stop linearization point,
-that UNKNOWN always requires reconciliation, and that the five-second lease is acceptable
-for the Mock/MVP load. The downloaded Temporal dev server still has a Windows-only startup
-issue on this host; the same persistent-restart scenario passed in hosted Linux CI. This
-review does not authorize a Provider, platform login, or publication.
+On 2026-08-22 the founder confirmed that the final pre-request gate is the stop
+linearization point, that UNKNOWN always requires reconciliation with no automatic retry,
+and that the five-second lease is acceptable for the Mock/MVP load. PR #7 was then merged
+as commit `8907878`; [post-merge main CI #20](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32570307908)
+passed in 1 minute 31 seconds.
+
+The downloaded Temporal dev server still has a Windows-only startup issue on this host;
+the same persistent-restart scenario passed in hosted Linux CI. Acceptance does not
+authorize a Provider, platform login, or publication.

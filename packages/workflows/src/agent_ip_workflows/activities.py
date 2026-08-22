@@ -8,6 +8,9 @@ from uuid import UUID
 
 import psycopg
 from agent_ip_data_models import (
+    MockBoundary,
+    MockRequestV1,
+    MockScenario,
     PublishRequestFingerprintInputV1,
     publish_request_fingerprint,
 )
@@ -16,6 +19,7 @@ from psycopg.types.json import Jsonb
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
+from agent_ip_workflows.mock_boundaries import MockPlatformAdapter
 from agent_ip_workflows.models import (
     IntentCommand,
     PublishOutcome,
@@ -23,6 +27,8 @@ from agent_ip_workflows.models import (
     StopCommand,
 )
 from agent_ip_workflows.publishing import PostgresPublishDispatcher
+
+_MOCK_PLATFORM_ADAPTER = MockPlatformAdapter()
 
 
 def _uuid(value: str) -> UUID:
@@ -338,15 +344,33 @@ class PostgresWorkflowActivities:
 
 
 async def mock_publish(command: IntentCommand) -> str:
-    """Return success without network access; M1-05 will add the full failure matrix."""
+    """Return validated deterministic success without network access."""
 
-    _uuid(command.intent_id)
+    await _execute_mock_platform(command)
     return PublishOutcome.SUCCEEDED.value
 
 
 async def _mock_publisher(command: IntentCommand) -> PublishOutcome:
-    _uuid(command.intent_id)
+    await _execute_mock_platform(command)
     return PublishOutcome.SUCCEEDED
+
+
+async def _execute_mock_platform(command: IntentCommand) -> None:
+    intent_id = _uuid(command.intent_id)
+    await _MOCK_PLATFORM_ADAPTER.execute(
+        MockRequestV1(
+            invocation_id=intent_id,
+            trace_id=intent_id,
+            boundary=MockBoundary.PLATFORM,
+            scenario=MockScenario.SUCCESS,
+            payload={
+                "intent_id": command.intent_id,
+                "candidate_id": command.candidate_id,
+                "account_id": command.account_id,
+                "request_fingerprint": command.request_fingerprint,
+            },
+        )
+    )
 
 
 def activity_functions(activities: PostgresWorkflowActivities) -> list[Any]:
