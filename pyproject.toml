@@ -4,6 +4,7 @@ version = "0.0.0"
 description = "Local-first workspace for the Agent IP OS control plane"
 requires-python = "==3.12.*"
 dependencies = [
+  "agent-ip-agent-runtime",
   "agent-ip-api",
   "agent-ip-data-models",
   "agent-ip-workflows",
@@ -25,12 +26,13 @@ required-version = "==0.12.3"
 python-preference = "only-managed"
 
 [tool.uv.sources]
+agent-ip-agent-runtime = { workspace = true }
 agent-ip-api = { workspace = true }
 agent-ip-data-models = { workspace = true }
 agent-ip-workflows = { workspace = true }
 
 [tool.uv.workspace]
-members = ["apps/api", "packages/data_models", "packages/workflows"]
+members = ["apps/api", "packages/agent_runtime", "packages/data_models", "packages/workflows"]
 
 [tool.ruff]
 target-version = "py312"
@@ -57,7 +59,7 @@ addopts = "--strict-config --strict-markers --basetemp=.pytest-tmp"
 
 [tool.coverage.run]
 branch = true
-source = ["agent_ip_api", "agent_ip_data_models", "agent_ip_workflows"]
+source = ["agent_ip_agent_runtime", "agent_ip_api", "agent_ip_data_models", "agent_ip_workflows"]
 
 [tool.coverage.report]
 show_missing = true

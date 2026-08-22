@@ -31,7 +31,7 @@ Status values: `DONE`, `READY_FOR_REVIEW`, `READY`, `BLOCKED`, `NOT_STARTED`. `D
 
 | ID | Task | Dependencies | Status | Completion definition / evidence |
 |---|---|---|---|---|
-| M2-01 | Provider interfaces and primary Mock | M1-05 | NOT_STARTED | Text/image/video/audio contracts cover request, async status, cancellation, cost, provenance, error taxonomy, and rate limits; contract tests pass. |
+| M2-01 | Provider interfaces and primary Mock | M1-05 | DONE | Text/image/video/audio Protocols share strict request, async status, cancellation, cost, provenance, error, and rate-limit contracts; deterministic zero-network primary Mocks pass replay/cancel/fail-closed contract tests. See [M2-01 evidence](docs/acceptance/m2-01-provider-contracts.md). |
 | M2-00 | Select M2A or M2B from G1 | M2-01, D-004, D-005, D-006 | NOT_STARTED | Decision evidence records deployment region, legal availability, budget, and either approved real text Provider or explicit M2B fallback. |
 | M2A-01 | One approved text Provider | M2-00 selects M2A | NOT_STARTED | Sandbox invocation produces validated structured output, provenance, errors, latency, and cost; Mock remains usable; secrets stay brokered and redacted. |
 | M2B-01 | Second behavioral Mock/contract Provider | M2-00 selects M2B | NOT_STARTED | Different latency/error/format behavior and switching tests prove the business workflow is Provider-independent; documentation does not claim real integration. |
