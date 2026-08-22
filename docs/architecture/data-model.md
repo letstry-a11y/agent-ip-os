@@ -1,6 +1,6 @@
 # Core data model
 
-- Status: M1-01 physical model and M1-03 canonical bindings implemented; founder review pending
+- Status: M1-01 physical model, M1-03 canonical bindings, and M1-06 approval binding implemented
 - Version: 1.1
 - Related: [MVP PRD](../product/prd-mvp.md), [content lifecycle](../specs/content-lifecycle.md), [canonical JSON v1](../specs/canonical-json-v1.md), [ADR-0004](../adr/0004-postgresql-authority-and-deferred-vectors.md)
 
@@ -108,6 +108,13 @@ two approvers; it only prevents the same subject from being counted twice if a f
 adds a second approver. Runtime evaluation fails closed when the snapshot hash, decision,
 expiry, candidate/report/policy/account binding, or approved action no longer matches current
 authoritative values.
+
+Migration `0006` adds a compare-and-swap version to each approval request and an immutable
+`approval_request_bindings` row. The binding freezes the candidate, fact, rights, risk,
+account, policy, and requested-action evidence before the request is shown to a human. The
+M1-06 API resolves actor identity on the server, prevents the request initiator from deciding
+their own request, and creates the existing canonical approval snapshot in the same database
+transaction that advances both request and candidate state.
 
 `publish_intents.outbox_message_id` and `outbox_messages.publish_intent_id` form deferred,
 unique, project-scoped foreign keys. Both rows can be inserted in either order inside one
