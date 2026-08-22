@@ -1,5 +1,15 @@
 """Versioned public domain schemas."""
 
+from agent_ip_data_models.approvals import (
+    ApprovalActorType,
+    ApprovalActorV1,
+    ApprovalBindingViewV1,
+    ApprovalCandidateViewV1,
+    ApprovalDecisionCommandV1,
+    ApprovalRequestStatus,
+    ApprovalRequestViewV1,
+    ApprovalRiskLevel,
+)
 from agent_ip_data_models.core import (
     ApprovalDecision,
     ApprovalSnapshotV1,
@@ -46,7 +56,15 @@ from agent_ip_data_models.mocks import (
 )
 
 __all__ = [
+    "ApprovalActorType",
+    "ApprovalActorV1",
+    "ApprovalBindingViewV1",
+    "ApprovalCandidateViewV1",
     "ApprovalDecision",
+    "ApprovalDecisionCommandV1",
+    "ApprovalRequestStatus",
+    "ApprovalRequestViewV1",
+    "ApprovalRiskLevel",
     "ApprovalSnapshotV1",
     "ArtifactV1",
     "AssetRightV1",

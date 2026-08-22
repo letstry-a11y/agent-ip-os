@@ -1,6 +1,6 @@
 # Content and platform-candidate lifecycle
 
-- Status: M1-02 workflow and M1-03 identity/invalidation rules implemented; founder review pending
+- Status: M1-02 workflow, M1-03 invalidation, and M1-06 human approval surface implemented
 - Version: 0.3
 - Normative for: M1 workflow, approval, outbox, reconciliation, stop, and later publishing tasks
 - Derived from: [technical baseline](../baseline/AI超级IP全Agent公司技术方案_v1.md)

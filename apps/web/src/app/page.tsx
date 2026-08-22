@@ -9,7 +9,7 @@ const statusCards = [
 
 export default function Home() {
   return (
-    <main>
+    <main className="home-main">
       <p className="eyebrow">M0 engineering baseline</p>
       <h1>Agent IP OS</h1>
       <p className="intro">

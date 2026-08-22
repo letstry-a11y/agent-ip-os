@@ -11,8 +11,19 @@ from uuid import UUID, uuid4
 
 import psycopg
 import pytest
+from agent_ip_api.approval import (
+    ApprovalConflict,
+    ApprovalForbidden,
+    ApprovalNotFound,
+    PostgresApprovalService,
+)
 from agent_ip_data_models import (
+    ApprovalActorType,
+    ApprovalActorV1,
     ApprovalDecision,
+    ApprovalDecisionCommandV1,
+    ApprovalInvalidationReason,
+    ApprovalRequestStatus,
     ApprovalSnapshotHashInputV1,
     CandidateHashInputV1,
     PublishRequestFingerprintInputV1,
@@ -106,6 +117,7 @@ def test_forward_upgrade_preserves_data_and_enables_immutable_guards(database_ur
         "0003_bind_candidate_content_version.sql",
         "0004_require_distinct_approvers.sql",
         "0005_publish_dispatch_controls.sql",
+        "0006_approval_console_bindings.sql",
     )
     assert migrate(database_url) == ()
 
@@ -123,6 +135,7 @@ def test_forward_upgrade_preserves_data_and_enables_immutable_guards(database_ur
             (3, "0003_bind_candidate_content_version.sql"),
             (4, "0004_require_distinct_approvers.sql"),
             (5, "0005_publish_dispatch_controls.sql"),
+            (6, "0006_approval_console_bindings.sql"),
         ]
         with pytest.raises(ObjectNotInPrerequisiteState, match="append-only"):
             connection.execute(
@@ -138,6 +151,7 @@ def test_core_constraints_outbox_atomicity_and_audit_chain(database_url: str) ->
         "0003_bind_candidate_content_version.sql",
         "0004_require_distinct_approvers.sql",
         "0005_publish_dispatch_controls.sql",
+        "0006_approval_console_bindings.sql",
     )
     identifiers = _seed_approved_intent(database_url)
     asyncio.run(
@@ -1170,3 +1184,418 @@ def _insert_audit_event(
         (event_id, project_id, uuid4(), uuid4(), previous_hash, event_hash),
     )
     return event_id
+
+
+@pytest.mark.parametrize(
+    ("decision", "request_status", "candidate_state", "valid", "reasons"),
+    [
+        (ApprovalDecision.APPROVED, "APPROVED", "APPROVED", True, ()),
+        (
+            ApprovalDecision.REJECTED,
+            "REJECTED",
+            "REJECTED",
+            False,
+            (ApprovalInvalidationReason.DECISION_NOT_APPROVED,),
+        ),
+        (
+            ApprovalDecision.REVISION_REQUESTED,
+            "REVISION_REQUESTED",
+            "REVISION_REQUESTED",
+            False,
+            (ApprovalInvalidationReason.DECISION_NOT_APPROVED,),
+        ),
+    ],
+)
+def test_approval_service_records_server_side_human_decisions_atomically(
+    database_url: str,
+    decision: ApprovalDecision,
+    request_status: str,
+    candidate_state: str,
+    valid: bool,
+    reasons: tuple[ApprovalInvalidationReason, ...],
+) -> None:
+    identifiers = _seed_pending_approval(database_url)
+    service = PostgresApprovalService(database_url)
+    actor = _approval_actor(identifiers)
+
+    pending = service.get_request(
+        actor, identifiers["project_id"], identifiers["approval_request_id"]
+    )
+    result = service.decide(
+        actor,
+        identifiers["project_id"],
+        identifiers["approval_request_id"],
+        ApprovalDecisionCommandV1(decision=decision, expected_version=0),
+        decided_at=identifiers["decision_time"],
+    )
+
+    assert pending.status is ApprovalRequestStatus.PENDING
+    assert pending.approval_valid is None
+    assert pending.viewer_subject_id == identifiers["approver_subject_id"]
+    assert result.status.value == request_status
+    assert result.candidate_state == candidate_state
+    assert result.state_version == 1
+    assert result.candidate_state_version == 1
+    assert result.approver_subject_ids == (identifiers["approver_subject_id"],)
+    assert result.approval_valid is valid
+    assert result.invalidation_reasons == reasons
+    assert result.snapshot_hash is not None
+    with psycopg.connect(database_url) as connection:
+        assert connection.execute(
+            "SELECT count(*) FROM approval_snapshots WHERE approval_request_id = %s",
+            (identifiers["approval_request_id"],),
+        ).fetchone() == (1,)
+
+
+def test_approval_service_enforces_identity_project_role_and_initiator_separation(
+    database_url: str,
+) -> None:
+    identifiers = _seed_pending_approval(database_url)
+    service = PostgresApprovalService(database_url)
+    actor = _approval_actor(identifiers)
+    command = ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0)
+
+    with pytest.raises(ApprovalForbidden, match="only a human"):
+        service.get_request(
+            actor.model_copy(update={"actor_type": ApprovalActorType.AGENT}),
+            identifiers["project_id"],
+            identifiers["approval_request_id"],
+        )
+    with pytest.raises(ApprovalForbidden, match="approver role"):
+        service.get_request(
+            actor.model_copy(update={"roles": ("VIEWER",)}),
+            identifiers["project_id"],
+            identifiers["approval_request_id"],
+        )
+    with pytest.raises(ApprovalForbidden, match="not authorized"):
+        service.get_request(
+            actor.model_copy(update={"project_ids": (uuid4(),)}),
+            identifiers["project_id"],
+            identifiers["approval_request_id"],
+        )
+    with pytest.raises(ApprovalForbidden, match="initiator cannot"):
+        service.decide(
+            actor.model_copy(update={"subject_id": identifiers["requested_by_subject_id"]}),
+            identifiers["project_id"],
+            identifiers["approval_request_id"],
+            command,
+        )
+    with pytest.raises(ApprovalNotFound, match="not found"):
+        service.get_request(actor, identifiers["project_id"], uuid4())
+
+
+def test_approval_service_exposes_invalidation_after_account_binding_changes(
+    database_url: str,
+) -> None:
+    identifiers = _seed_pending_approval(database_url)
+    service = PostgresApprovalService(database_url)
+    actor = _approval_actor(identifiers)
+    service.decide(
+        actor,
+        identifiers["project_id"],
+        identifiers["approval_request_id"],
+        ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0),
+        decided_at=identifiers["decision_time"],
+    )
+
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            "UPDATE platform_accounts SET account_fingerprint = %s "
+            "WHERE project_id = %s AND id = %s",
+            (bytes.fromhex("71" * 32), identifiers["project_id"], identifiers["account_id"]),
+        )
+
+    invalidated = service.get_request(
+        actor,
+        identifiers["project_id"],
+        identifiers["approval_request_id"],
+        checked_at=identifiers["decision_time"] + timedelta(minutes=1),
+    )
+    assert invalidated.status is ApprovalRequestStatus.APPROVED
+    assert invalidated.approval_valid is False
+    assert invalidated.invalidation_reasons == (ApprovalInvalidationReason.ACCOUNT_CHANGED,)
+
+
+def test_approval_service_fails_closed_on_stale_terminal_r4_and_unsupported_requests(
+    database_url: str,
+) -> None:
+    service = PostgresApprovalService(database_url)
+    stale = _seed_pending_approval(database_url)
+    actor = _approval_actor(stale)
+    with pytest.raises(ApprovalConflict, match="version is stale"):
+        service.decide(
+            actor,
+            stale["project_id"],
+            stale["approval_request_id"],
+            ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=1),
+        )
+
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            "UPDATE platform_candidate_states SET state = 'RISK_ROUTING' WHERE candidate_id = %s",
+            (stale["candidate_id"],),
+        )
+    with pytest.raises(ApprovalConflict, match="not waiting"):
+        service.decide(
+            actor,
+            stale["project_id"],
+            stale["approval_request_id"],
+            ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0),
+        )
+
+    two_people = _seed_pending_approval(database_url, required_approvals=2)
+    with pytest.raises(ApprovalConflict, match="supports one"):
+        service.decide(
+            _approval_actor(two_people),
+            two_people["project_id"],
+            two_people["approval_request_id"],
+            ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0),
+        )
+
+    r4 = _seed_pending_approval(database_url, risk_level="R4")
+    with pytest.raises(ApprovalConflict, match="R4 candidates"):
+        service.decide(
+            _approval_actor(r4),
+            r4["project_id"],
+            r4["approval_request_id"],
+            ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0),
+        )
+
+    resolved = _seed_pending_approval(database_url)
+    resolved_actor = _approval_actor(resolved)
+    resolved_command = ApprovalDecisionCommandV1(
+        decision=ApprovalDecision.REJECTED, expected_version=0
+    )
+    service.decide(
+        resolved_actor,
+        resolved["project_id"],
+        resolved["approval_request_id"],
+        resolved_command,
+        decided_at=resolved["decision_time"],
+    )
+    with pytest.raises(ApprovalConflict, match="already resolved"):
+        service.decide(
+            resolved_actor,
+            resolved["project_id"],
+            resolved["approval_request_id"],
+            ApprovalDecisionCommandV1(
+                decision=ApprovalDecision.REJECTED,
+                expected_version=1,
+            ),
+            decided_at=resolved["decision_time"],
+        )
+
+
+def test_approval_service_exposes_and_persists_expiry_without_snapshot(
+    database_url: str,
+) -> None:
+    checked_at = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
+    identifiers = _seed_pending_approval(
+        database_url,
+        created_at=checked_at - timedelta(days=1),
+        expires_at=checked_at - timedelta(seconds=1),
+    )
+    service = PostgresApprovalService(database_url)
+    actor = _approval_actor(identifiers)
+
+    view = service.get_request(
+        actor,
+        identifiers["project_id"],
+        identifiers["approval_request_id"],
+        checked_at=checked_at,
+    )
+    assert view.status is ApprovalRequestStatus.EXPIRED
+    assert view.approval_valid is False
+    assert view.invalidation_reasons == (ApprovalInvalidationReason.EXPIRED,)
+
+    with pytest.raises(ApprovalConflict, match="has expired"):
+        service.decide(
+            actor,
+            identifiers["project_id"],
+            identifiers["approval_request_id"],
+            ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0),
+            decided_at=checked_at,
+        )
+    with psycopg.connect(database_url) as connection:
+        assert connection.execute(
+            "SELECT status, state_version FROM approval_requests WHERE id = %s",
+            (identifiers["approval_request_id"],),
+        ).fetchone() == ("EXPIRED", 1)
+        assert connection.execute(
+            "SELECT state, state_version FROM platform_candidate_states WHERE candidate_id = %s",
+            (identifiers["candidate_id"],),
+        ).fetchone() == ("APPROVAL_EXPIRED", 1)
+        assert connection.execute(
+            "SELECT count(*) FROM approval_snapshots WHERE approval_request_id = %s",
+            (identifiers["approval_request_id"],),
+        ).fetchone() == (0,)
+
+
+def test_approval_service_rejects_submillisecond_snapshot_material(database_url: str) -> None:
+    decision_time = datetime(2026, 8, 22, 10, 0, 0, 1, tzinfo=UTC)
+    identifiers = _seed_pending_approval(database_url, decision_time=decision_time)
+    service = PostgresApprovalService(database_url)
+
+    with pytest.raises(ApprovalConflict, match="cannot be canonicalized") as captured:
+        service.decide(
+            _approval_actor(identifiers),
+            identifiers["project_id"],
+            identifiers["approval_request_id"],
+            ApprovalDecisionCommandV1(decision=ApprovalDecision.APPROVED, expected_version=0),
+            decided_at=decision_time,
+        )
+    assert isinstance(captured.value.__cause__, ValueError)
+
+
+def _approval_actor(identifiers: dict[str, UUID | datetime]) -> ApprovalActorV1:
+    return ApprovalActorV1(
+        subject_id=identifiers["approver_subject_id"],
+        actor_type=ApprovalActorType.HUMAN,
+        roles=("APPROVER",),
+        project_ids=(identifiers["project_id"],),
+    )
+
+
+def _seed_pending_approval(
+    database_url: str,
+    *,
+    risk_level: str = "R1",
+    required_approvals: int = 1,
+    created_at: datetime | None = None,
+    expires_at: datetime | None = None,
+    decision_time: datetime | None = None,
+) -> dict[str, UUID | datetime]:
+    migrate(database_url)
+    now = datetime(2026, 8, 22, 10, 0, tzinfo=UTC)
+    created = created_at or now
+    expiry = expires_at or now + timedelta(days=1)
+    identifiers: dict[str, UUID | datetime] = {
+        "project_id": uuid4(),
+        "content_id": uuid4(),
+        "content_version_id": uuid4(),
+        "account_id": uuid4(),
+        "candidate_id": uuid4(),
+        "approval_request_id": uuid4(),
+        "approver_subject_id": uuid4(),
+        "requested_by_subject_id": uuid4(),
+        "decision_time": decision_time or now + timedelta(minutes=1),
+    }
+    account_hash = bytes.fromhex("51" * 32)
+    candidate_material = CandidateHashInputV1(
+        title="她写给世界的信｜第一封",
+        caption="写给仍然愿意认真生活的人。",
+        tags=("写作", "她写给世界的信"),
+        ordered_asset_hashes=("31" * 32,),
+        ai_disclosure="AI辅助视觉",
+        platform="xiaohongshu_pack",
+        account_id=identifiers["account_id"],
+        policy_version="policy-v1",
+    )
+    candidate_result = candidate_hash(candidate_material)
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            "INSERT INTO ip_projects (id, slug, name) VALUES (%s, %s, 'Approval test')",
+            (
+                identifiers["project_id"],
+                f"approval-{str(identifiers['project_id'])[:8]}",
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO content_units (id, project_id, state, trace_id)
+            VALUES (%s, %s, 'CANDIDATES_ACTIVE', %s)
+            """,
+            (identifiers["content_id"], identifiers["project_id"], uuid4()),
+        )
+        connection.execute(
+            """
+            INSERT INTO content_versions (
+                id, project_id, content_unit_id, version, payload, content_hash,
+                created_by_subject_id
+            ) VALUES (%s, %s, %s, 1, '{}'::jsonb, %s, %s)
+            """,
+            (
+                identifiers["content_version_id"],
+                identifiers["project_id"],
+                identifiers["content_id"],
+                bytes.fromhex("21" * 32),
+                uuid4(),
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO platform_accounts (
+                id, project_id, platform, environment, status, capabilities_version,
+                account_fingerprint
+            ) VALUES (%s, %s, 'xiaohongshu_pack', 'PACKAGE', 'ACTIVE', 'v1', %s)
+            """,
+            (identifiers["account_id"], identifiers["project_id"], account_hash),
+        )
+        connection.execute(
+            """
+            INSERT INTO platform_candidates (
+                id, project_id, content_unit_id, content_version_id, account_id, platform,
+                title, caption, normalized_tags, ai_disclosure, policy_version,
+                canonical_payload, candidate_hash
+            ) VALUES (
+                %s, %s, %s, %s, %s, 'xiaohongshu_pack',
+                '她写给世界的信｜第一封', '写给仍然愿意认真生活的人。',
+                ARRAY['写作', '她写给世界的信'], 'AI辅助视觉', 'policy-v1', %s, %s
+            )
+            """,
+            (
+                identifiers["candidate_id"],
+                identifiers["project_id"],
+                identifiers["content_id"],
+                identifiers["content_version_id"],
+                identifiers["account_id"],
+                Jsonb(candidate_payload(candidate_material)),
+                bytes.fromhex(candidate_result.sha256),
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO platform_candidate_states (candidate_id, project_id, state)
+            VALUES (%s, %s, 'WAITING_APPROVAL')
+            """,
+            (identifiers["candidate_id"], identifiers["project_id"]),
+        )
+        connection.execute(
+            """
+            INSERT INTO approval_requests (
+                id, project_id, candidate_id, risk_level, requested_action,
+                required_approvals, status, requested_by_subject_id, expires_at, created_at
+            ) VALUES (%s, %s, %s, %s, 'PACKAGE_EXPORT', %s, 'PENDING', %s, %s, %s)
+            """,
+            (
+                identifiers["approval_request_id"],
+                identifiers["project_id"],
+                identifiers["candidate_id"],
+                risk_level,
+                required_approvals,
+                identifiers["requested_by_subject_id"],
+                expiry,
+                created,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO approval_request_bindings (
+                approval_request_id, project_id, candidate_id, account_id, candidate_hash,
+                fact_report_hash, rights_manifest_hash, risk_report_hash, policy_version,
+                account_hash, requested_action
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'policy-v1', %s, 'PACKAGE_EXPORT')
+            """,
+            (
+                identifiers["approval_request_id"],
+                identifiers["project_id"],
+                identifiers["candidate_id"],
+                identifiers["account_id"],
+                bytes.fromhex(candidate_result.sha256),
+                bytes.fromhex("61" * 32),
+                bytes.fromhex("62" * 32),
+                bytes.fromhex("63" * 32),
+                account_hash,
+            ),
+        )
+    return identifiers

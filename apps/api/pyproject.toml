@@ -6,6 +6,7 @@ requires-python = "==3.12.*"
 dependencies = [
   "agent-ip-data-models",
   "fastapi>=0.116,<1",
+  "psycopg[binary]>=3.2,<4",
   "pydantic>=2.11,<3",
   "uvicorn[standard]>=0.35,<1",
 ]

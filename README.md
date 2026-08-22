@@ -4,7 +4,7 @@ Agent IP OS is a local-first, auditable operating system for a two-founder AI-as
 
 ## Current status
 
-M0-00 through M0-05 and M1-01 through M1-05 are complete; M1-06 is next. The repository has a pinned Python/Node workspace, minimal API and web shells, locked dependencies, local quality gates, hosted CI, a verified six-service Docker Compose development stack, shared versioned domain contracts, forward-only PostgreSQL migrations, a cross-runtime canonical-hash contract, durable Temporal parent/child workflows backed by PostgreSQL Activities, accepted guarded Mock publish dispatch, and accepted deterministic network-free Agent/media/platform fault fixtures. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M1-04 and M1-05 acceptance have not authorized any real external action.
+M0-00 through M0-05 and M1-01 through M1-05 are complete; M1-06 is ready for human review. The repository has a pinned Python/Node workspace, locked quality gates, a verified six-service Docker Compose stack, shared versioned domain contracts, forward-only PostgreSQL migrations, cross-runtime canonical hashes, durable Temporal workflows, guarded Mock publish dispatch, deterministic Agent/media/platform fixtures, and a responsive human approval desk backed by immutable evidence bindings. The public [`letstry-a11y/agent-ip-os`](https://github.com/letstry-a11y/agent-ip-os) repository protects `main` with pull requests, an up-to-date passing `quality` check, resolved conversations, and linear history. M1-06 remains Mock-only and has not authorized any real external action.
 
 The current default is Mock-only, `DRY_RUN=true`, no cloud resources, no real Provider, and no real platform action.
 
@@ -38,7 +38,9 @@ The 12-week MVP delivers six combined Agent runtime units, image/text and one 30
 - [M1-03 canonical-hash evidence](docs/acceptance/m1-03-canonical-hash.md): cross-runtime vectors, invalidation tests, and database guard.
 - [M1-04 publish-dispatch evidence](docs/acceptance/m1-04-publish-dispatch.md): request deduplication, short leases, stop races, and UNKNOWN reconciliation.
 - [M1-05 Mock evidence](docs/acceptance/m1-05-mock-boundaries.md): deterministic Agent/media/platform failures, network guard, and cost reporting.
+- [M1-06 approval-console evidence](docs/acceptance/m1-06-approval-console.md): server-side actor identity, evidence binding, atomic human decisions, invalidation, and responsive browser verification.
 - [Mock boundaries v1](docs/specs/mock-boundaries-v1.md): deterministic Agent/media/platform success, failure, and cost semantics with no network.
+- [Approval console v1](docs/specs/approval-console-v1.md): Mock identity boundary, project-scoped API, compare-and-swap decisions, and page contract.
 
 ## Planned repository layout
 
