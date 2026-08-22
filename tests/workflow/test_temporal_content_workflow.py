@@ -78,6 +78,8 @@ class RecordingActivities:
             raise ApplicationError("permanent mock failure", non_retryable=True)
         if mode == "unknown":
             return PublishOutcome.UNKNOWN.value
+        if mode == "stopped":
+            return PublishOutcome.STOPPED.value
         return PublishOutcome.SUCCEEDED.value
 
     def registry(self) -> list[object]:
@@ -235,6 +237,7 @@ async def _exercise_terminal_cases(
     for mode, expected in (
         ("retry", "PUBLISHED"),
         ("unknown", "RECONCILIATION_REQUIRED"),
+        ("stopped", "PUBLISH_FAILED"),
         ("permanent", "PUBLISH_FAILED"),
     ):
         workflow_id = f"content-{mode}"

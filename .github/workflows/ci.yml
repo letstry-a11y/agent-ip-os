@@ -51,6 +51,8 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Run repository quality gates
+        env:
+          DATABASE_URL: postgresql://agent_ip:ci_test_only@127.0.0.1:5432/agent_ip
         run: npm run check
 
       - name: Run PostgreSQL migration integration tests
