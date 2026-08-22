@@ -37,6 +37,13 @@ from agent_ip_data_models.hashing import (
     publish_request_fingerprint,
     publish_request_payload,
 )
+from agent_ip_data_models.mocks import (
+    MockBoundary,
+    MockRequestV1,
+    MockResultV1,
+    MockScenario,
+    MockUsageV1,
+)
 
 __all__ = [
     "ApprovalDecision",
@@ -72,4 +79,9 @@ __all__ = [
     "normalize_sorted_tags",
     "publish_request_fingerprint",
     "publish_request_payload",
+    "MockBoundary",
+    "MockRequestV1",
+    "MockResultV1",
+    "MockScenario",
+    "MockUsageV1",
 ]

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"boundary": "AGENT", "scenario": "SUCCESS"},
+    {"boundary": "MEDIA", "scenario": "SUCCESS"},
+    {"boundary": "PLATFORM", "scenario": "SUCCESS"},
+    {"boundary": "AGENT", "scenario": "INVALID_SCHEMA", "retryable": false},
+    {"boundary": "MEDIA", "scenario": "TIMEOUT", "retryable": true},
+    {"boundary": "AGENT", "scenario": "TRANSIENT_FAILURE", "retryable": true},
+    {"boundary": "MEDIA", "scenario": "PERMANENT_FAILURE", "retryable": false},
+    {"boundary": "PLATFORM", "scenario": "CANCELLED", "retryable": false},
+    {
+      "boundary": "PLATFORM",
+      "scenario": "LOST_RESPONSE",
+      "retryable": false,
+      "request_accepted": true,
+      "result_uncertain": true
+    }
+  ]
+}
