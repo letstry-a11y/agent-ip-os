@@ -29,10 +29,14 @@
    patterns verified.
 6. Web formatting, ESLint, TypeScript, five Vitest tests, and the Next.js production build
    passed.
+7. [PR #8 hosted CI](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32571682107)
+   passed the complete Linux quality gate in 1 minute 51 seconds, including the persistent
+   Temporal restart, full unit/workflow/PostgreSQL integration set, 100% workspace coverage,
+   repository and web checks, Compose validation, and the production build.
 
 The persistent Temporal restart test was stopped after the known Windows development-server
-startup wait reproduced. It changes no M1-05 behavior and remains a mandatory hosted
-Linux CI gate before merge; the same scenario passed on PR #7 and post-merge main CI #20.
+startup wait reproduced. It changes no M1-05 behavior; the required scenario passed in the
+hosted Linux CI evidence above.
 
 ## Human review boundary
 
