@@ -4,6 +4,7 @@ import asyncio
 import selectors
 import shutil
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -14,12 +15,21 @@ from agent_ip_data_models import (
     ApprovalDecision,
     ApprovalSnapshotHashInputV1,
     CandidateHashInputV1,
+    PublishRequestFingerprintInputV1,
     approval_snapshot_hash,
     candidate_hash,
     candidate_payload,
+    publish_request_fingerprint,
 )
 from agent_ip_workflows.activities import PostgresWorkflowActivities
-from agent_ip_workflows.models import IntentCommand, StateTransition
+from agent_ip_workflows.models import (
+    IntentCommand,
+    PublishOutcome,
+    StateTransition,
+    StopCommand,
+    StopScope,
+)
+from agent_ip_workflows.publishing import PostgresPublishDispatcher
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from psycopg.errors import (
@@ -29,6 +39,7 @@ from psycopg.errors import (
     UniqueViolation,
 )
 from psycopg.types.json import Jsonb
+from temporalio.exceptions import ApplicationError
 
 from scripts.db_migrate import MIGRATIONS_DIR, MigrationError, migrate, resolve_database_url
 
@@ -94,6 +105,7 @@ def test_forward_upgrade_preserves_data_and_enables_immutable_guards(database_ur
         "0002_enforce_immutable_evidence.sql",
         "0003_bind_candidate_content_version.sql",
         "0004_require_distinct_approvers.sql",
+        "0005_publish_dispatch_controls.sql",
     )
     assert migrate(database_url) == ()
 
@@ -110,6 +122,7 @@ def test_forward_upgrade_preserves_data_and_enables_immutable_guards(database_ur
             (2, "0002_enforce_immutable_evidence.sql"),
             (3, "0003_bind_candidate_content_version.sql"),
             (4, "0004_require_distinct_approvers.sql"),
+            (5, "0005_publish_dispatch_controls.sql"),
         ]
         with pytest.raises(ObjectNotInPrerequisiteState, match="append-only"):
             connection.execute(
@@ -124,6 +137,7 @@ def test_core_constraints_outbox_atomicity_and_audit_chain(database_url: str) ->
         "0002_enforce_immutable_evidence.sql",
         "0003_bind_candidate_content_version.sql",
         "0004_require_distinct_approvers.sql",
+        "0005_publish_dispatch_controls.sql",
     )
     identifiers = _seed_approved_intent(database_url)
     asyncio.run(
@@ -372,6 +386,432 @@ def test_candidate_binding_forward_fix_refuses_unsafe_inference(database_url: st
         ).fetchone() == (0,)
 
 
+def test_one_hundred_concurrent_repeats_converge_on_one_logical_action(
+    database_url: str,
+) -> None:
+    assert migrate(database_url)
+    identifiers = _seed_approved_intent(database_url)
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            """
+            UPDATE platform_candidate_states
+            SET state = 'READY_TO_INTENT', state_version = state_version + 1
+            WHERE project_id = %s AND candidate_id = %s
+            """,
+            (identifiers["project_id"], identifiers["candidate_id"]),
+        )
+    base = _new_command(database_url, identifiers, schedule_hour=3)
+
+    async def submit_all() -> tuple[IntentCommand, ...]:
+        activities = PostgresWorkflowActivities(database_url)
+        limit = asyncio.Semaphore(20)
+
+        async def submit(index: int) -> IntentCommand:
+            async with limit:
+                command = IntentCommand(
+                    **{
+                        **base.__dict__,
+                        "intent_id": str(uuid4()),
+                        "outbox_id": str(uuid4()),
+                    }
+                )
+                return await activities.create_publish_intent_and_outbox(command)
+
+        return tuple(await asyncio.gather(*(submit(index) for index in range(100))))
+
+    results = asyncio.run(
+        submit_all(),
+        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+    )
+    assert len({item.intent_id for item in results}) == 1
+    assert len({item.outbox_id for item in results}) == 1
+    with psycopg.connect(database_url) as connection:
+        assert connection.execute(
+            """
+            SELECT count(*) FROM publish_intents
+            WHERE project_id = %s AND request_fingerprint = %s
+            """,
+            (identifiers["project_id"], bytes.fromhex(base.request_fingerprint)),
+        ).fetchone() == (1,)
+        assert connection.execute(
+            """
+            SELECT count(*)
+            FROM publish_jobs j
+            JOIN publish_intents i
+              ON i.project_id = j.project_id AND i.id = j.publish_intent_id
+            WHERE i.project_id = %s AND i.request_fingerprint = %s
+            """,
+            (identifiers["project_id"], bytes.fromhex(base.request_fingerprint)),
+        ).fetchone() == (1,)
+
+
+@pytest.mark.parametrize("scope", [StopScope.GLOBAL, StopScope.ACCOUNT])
+def test_stop_raised_after_lease_blocks_the_external_request(
+    database_url: str, scope: StopScope
+) -> None:
+    assert migrate(database_url)
+    identifiers = _seed_approved_intent(database_url)
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            """
+            UPDATE platform_candidate_states SET state = 'READY_TO_INTENT'
+            WHERE project_id = %s AND candidate_id = %s
+            """,
+            (identifiers["project_id"], identifiers["candidate_id"]),
+        )
+    command = _new_command(database_url, identifiers, schedule_hour=4)
+
+    async def exercise() -> tuple[PublishOutcome, int]:
+        activities = PostgresWorkflowActivities(database_url)
+        await activities.create_publish_intent_and_outbox(command)
+        dispatcher = PostgresPublishDispatcher(database_url)
+        calls = 0
+
+        async def raise_stop() -> None:
+            await dispatcher.set_stop(
+                StopCommand(
+                    control_id=str(uuid4()),
+                    project_id=str(identifiers["project_id"]),
+                    scope=scope,
+                    account_id=(
+                        str(identifiers["account_id"]) if scope is StopScope.ACCOUNT else None
+                    ),
+                    stopped=True,
+                    reason="operator stop race test",
+                    expected_version=-1,
+                    updated_by_subject_id=str(uuid4()),
+                )
+            )
+
+        async def publisher(_: IntentCommand) -> PublishOutcome:
+            nonlocal calls
+            calls += 1
+            return PublishOutcome.SUCCEEDED
+
+        outcome = await dispatcher.dispatch(command, publisher, after_lease=raise_stop)
+        return outcome, calls
+
+    outcome, calls = asyncio.run(
+        exercise(),
+        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+    )
+    assert outcome is PublishOutcome.STOPPED
+    assert calls == 0
+    with psycopg.connect(database_url) as connection:
+        assert connection.execute(
+            "SELECT state FROM publish_jobs WHERE publish_intent_id = %s",
+            (UUID(command.intent_id),),
+        ).fetchone() == ("STOPPED",)
+        assert connection.execute(
+            "SELECT count(*) FROM publish_attempts WHERE publish_intent_id = %s",
+            (UUID(command.intent_id),),
+        ).fetchone() == (0,)
+
+
+def test_unknown_outcome_requires_reconciliation_and_is_never_retried(
+    database_url: str,
+) -> None:
+    assert migrate(database_url)
+    identifiers = _seed_approved_intent(database_url)
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            """
+            UPDATE platform_candidate_states SET state = 'READY_TO_INTENT'
+            WHERE project_id = %s AND candidate_id = %s
+            """,
+            (identifiers["project_id"], identifiers["candidate_id"]),
+        )
+    command = _new_command(database_url, identifiers, schedule_hour=5)
+
+    async def exercise() -> tuple[PublishOutcome, PublishOutcome, int]:
+        activities = PostgresWorkflowActivities(database_url)
+        await activities.create_publish_intent_and_outbox(command)
+        dispatcher = PostgresPublishDispatcher(database_url)
+        calls = 0
+
+        async def publisher(_: IntentCommand) -> PublishOutcome:
+            nonlocal calls
+            calls += 1
+            return PublishOutcome.UNKNOWN
+
+        first = await dispatcher.dispatch(command, publisher)
+        second = await dispatcher.dispatch(command, publisher)
+        return first, second, calls
+
+    first, second, calls = asyncio.run(
+        exercise(),
+        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+    )
+    assert (first, second, calls) == (
+        PublishOutcome.UNKNOWN,
+        PublishOutcome.UNKNOWN,
+        1,
+    )
+    with psycopg.connect(database_url) as connection:
+        assert connection.execute(
+            "SELECT state FROM publish_jobs WHERE publish_intent_id = %s",
+            (UUID(command.intent_id),),
+        ).fetchone() == ("RECONCILIATION_REQUIRED",)
+        assert connection.execute(
+            "SELECT outcome FROM publish_attempts WHERE publish_intent_id = %s",
+            (UUID(command.intent_id),),
+        ).fetchall() == [("UNKNOWN",)]
+
+
+def test_stop_control_compare_and_swap_is_idempotent_and_fail_closed(
+    database_url: str,
+) -> None:
+    assert migrate(database_url)
+    identifiers = _seed_approved_intent(database_url)
+    dispatcher = PostgresPublishDispatcher(database_url)
+    actor_id = str(uuid4())
+    control_id = str(uuid4())
+    create = StopCommand(
+        control_id=control_id,
+        project_id=str(identifiers["project_id"]),
+        scope=StopScope.GLOBAL,
+        account_id=None,
+        stopped=True,
+        reason="operator pause",
+        expected_version=-1,
+        updated_by_subject_id=actor_id,
+    )
+
+    async def exercise() -> tuple[int, int, int, int]:
+        created = await dispatcher.set_stop(create)
+        create_retry = await dispatcher.set_stop(create)
+        clear = replace(create, stopped=False, reason=None, expected_version=0)
+        cleared = await dispatcher.set_stop(clear)
+        clear_retry = await dispatcher.set_stop(clear)
+        with pytest.raises(ApplicationError, match="compare-and-swap"):
+            await dispatcher.set_stop(replace(clear, control_id=str(uuid4()), expected_version=1))
+        with pytest.raises(ApplicationError, match="compare-and-swap"):
+            await dispatcher.set_stop(replace(create, expected_version=0))
+        with pytest.raises(ApplicationError, match="compare-and-swap"):
+            await dispatcher.set_stop(
+                StopCommand(
+                    control_id=str(uuid4()),
+                    project_id=str(identifiers["project_id"]),
+                    scope=StopScope.ACCOUNT,
+                    account_id=str(identifiers["account_id"]),
+                    stopped=True,
+                    reason="bad create version",
+                    expected_version=0,
+                    updated_by_subject_id=actor_id,
+                )
+            )
+        return created, create_retry, cleared, clear_retry
+
+    assert asyncio.run(
+        exercise(),
+        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+    ) == (0, 0, 1, 1)
+
+    with pytest.raises(ValueError, match="must not be blank"):
+        PostgresPublishDispatcher(" ")
+    with pytest.raises(ValueError, match="positive"):
+        PostgresPublishDispatcher(database_url, lease_duration=timedelta(0))
+    malformed = (
+        replace(create, expected_version=-2),
+        replace(create, account_id=str(identifiers["account_id"])),
+        replace(create, reason=None),
+    )
+    for command in malformed:
+        with pytest.raises(ValueError):
+            asyncio.run(dispatcher.set_stop(command))
+
+
+def test_dispatch_rechecks_gates_and_preserves_every_terminal_outcome(
+    database_url: str,
+) -> None:
+    assert migrate(database_url)
+    identifiers = _seed_approved_intent(database_url)
+    with psycopg.connect(database_url, autocommit=True) as connection:
+        connection.execute(
+            """
+            UPDATE platform_candidate_states SET state = 'READY_TO_INTENT'
+            WHERE project_id = %s AND candidate_id = %s
+            """,
+            (identifiers["project_id"], identifiers["candidate_id"]),
+        )
+
+    async def exercise() -> None:
+        activities = PostgresWorkflowActivities(database_url)
+        dispatcher = PostgresPublishDispatcher(database_url)
+
+        missing = _new_command(database_url, identifiers, schedule_hour=6)
+        with pytest.raises(ApplicationError, match="not dispatchable"):
+            await dispatcher.dispatch(missing, _success_publisher)
+
+        success = _new_command(database_url, identifiers, schedule_hour=7)
+        await activities.create_publish_intent_and_outbox(success)
+        success_calls = 0
+
+        async def succeeds(_: IntentCommand) -> PublishOutcome:
+            nonlocal success_calls
+            success_calls += 1
+            return PublishOutcome.SUCCEEDED
+
+        assert await dispatcher.dispatch(success, succeeds) is PublishOutcome.SUCCEEDED
+        assert await dispatcher.dispatch(success, succeeds) is PublishOutcome.SUCCEEDED
+        assert success_calls == 1
+        with pytest.raises(ApplicationError, match="does not match"):
+            await dispatcher.dispatch(replace(success, outbox_id=str(uuid4())), succeeds)
+
+        publisher_error = _new_command(database_url, identifiers, schedule_hour=8)
+        await activities.create_publish_intent_and_outbox(publisher_error)
+
+        async def raises(_: IntentCommand) -> PublishOutcome:
+            raise RuntimeError("lost response")
+
+        assert await dispatcher.dispatch(publisher_error, raises) is PublishOutcome.UNKNOWN
+
+        stale = _new_command(database_url, identifiers, schedule_hour=9)
+        await activities.create_publish_intent_and_outbox(stale)
+        with psycopg.connect(database_url, autocommit=True) as connection:
+            connection.execute(
+                "UPDATE platform_accounts SET status = 'PAUSED' WHERE id = %s",
+                (identifiers["account_id"],),
+            )
+        assert await dispatcher.dispatch(stale, succeeds) is PublishOutcome.FAILED
+        with psycopg.connect(database_url, autocommit=True) as connection:
+            connection.execute(
+                "UPDATE platform_accounts SET status = 'ACTIVE' WHERE id = %s",
+                (identifiers["account_id"],),
+            )
+        assert await dispatcher.dispatch(stale, succeeds) is PublishOutcome.FAILED
+
+        delivered_conflict = _new_command(database_url, identifiers, schedule_hour=13)
+        await activities.create_publish_intent_and_outbox(delivered_conflict)
+        with psycopg.connect(database_url, autocommit=True) as connection:
+            connection.execute(
+                "UPDATE outbox_messages SET delivered_at = CURRENT_TIMESTAMP WHERE id = %s",
+                (UUID(delivered_conflict.outbox_id),),
+            )
+        with pytest.raises(ApplicationError, match="no terminal publish state"):
+            await dispatcher.dispatch(delivered_conflict, succeeds)
+
+        stopped = _new_command(database_url, identifiers, schedule_hour=10)
+        await activities.create_publish_intent_and_outbox(stopped)
+        control = StopCommand(
+            control_id=str(uuid4()),
+            project_id=str(identifiers["project_id"]),
+            scope=StopScope.ACCOUNT,
+            account_id=str(identifiers["account_id"]),
+            stopped=True,
+            reason="pre-dispatch stop",
+            expected_version=-1,
+            updated_by_subject_id=str(uuid4()),
+        )
+        assert await dispatcher.set_stop(control) == 0
+        assert await dispatcher.dispatch(stopped, succeeds) is PublishOutcome.STOPPED
+        assert (
+            await dispatcher.set_stop(
+                replace(control, stopped=False, reason=None, expected_version=0)
+            )
+            == 1
+        )
+
+        invalid_outcome = _new_command(database_url, identifiers, schedule_hour=11)
+        await activities.create_publish_intent_and_outbox(invalid_outcome)
+
+        async def invalid(_: IntentCommand) -> PublishOutcome:
+            return PublishOutcome.STOPPED
+
+        assert await dispatcher.dispatch(invalid_outcome, invalid) is PublishOutcome.FAILED
+
+        busy = _new_command(database_url, identifiers, schedule_hour=12)
+        await activities.create_publish_intent_and_outbox(busy)
+        other = PostgresPublishDispatcher(database_url)
+        observed: list[PublishOutcome] = []
+
+        async def check_other_worker() -> None:
+            observed.append(await other.dispatch(busy, succeeds))
+
+        assert (
+            await dispatcher.dispatch(busy, succeeds, after_lease=check_other_worker)
+            is PublishOutcome.SUCCEEDED
+        )
+        assert observed == [PublishOutcome.BUSY]
+
+        same_worker = _new_command(database_url, identifiers, schedule_hour=14)
+        await activities.create_publish_intent_and_outbox(same_worker)
+
+        async def reacquire_same_worker() -> None:
+            assert not isinstance(await dispatcher._acquire(same_worker), PublishOutcome)
+
+        assert (
+            await dispatcher.dispatch(same_worker, succeeds, after_lease=reacquire_same_worker)
+            is PublishOutcome.SUCCEEDED
+        )
+
+        stale_at_request = _new_command(database_url, identifiers, schedule_hour=15)
+        await activities.create_publish_intent_and_outbox(stale_at_request)
+
+        async def pause_account() -> None:
+            with psycopg.connect(database_url, autocommit=True) as connection:
+                connection.execute(
+                    "UPDATE platform_accounts SET status = 'PAUSED' WHERE id = %s",
+                    (identifiers["account_id"],),
+                )
+
+        assert (
+            await dispatcher.dispatch(stale_at_request, succeeds, after_lease=pause_account)
+            is PublishOutcome.FAILED
+        )
+        with psycopg.connect(database_url, autocommit=True) as connection:
+            connection.execute(
+                "UPDATE platform_accounts SET status = 'ACTIVE' WHERE id = %s",
+                (identifiers["account_id"],),
+            )
+
+        invalid_lease = _new_command(database_url, identifiers, schedule_hour=16)
+        await activities.create_publish_intent_and_outbox(invalid_lease)
+
+        async def replace_owner() -> None:
+            with psycopg.connect(database_url, autocommit=True) as connection:
+                connection.execute(
+                    """
+                    UPDATE publish_jobs SET lease_owner_id = %s
+                    WHERE publish_intent_id = %s
+                    """,
+                    (uuid4(), UUID(invalid_lease.intent_id)),
+                )
+
+        assert (
+            await dispatcher.dispatch(invalid_lease, succeeds, after_lease=replace_owner)
+            is PublishOutcome.BUSY
+        )
+
+        lost_lease = _new_command(database_url, identifiers, schedule_hour=17)
+        await activities.create_publish_intent_and_outbox(lost_lease)
+
+        async def loses_lease(_: IntentCommand) -> PublishOutcome:
+            with psycopg.connect(database_url, autocommit=True) as connection:
+                connection.execute(
+                    """
+                    UPDATE publish_jobs
+                    SET state = 'FAILED', lease_token = NULL, lease_owner_id = NULL,
+                        lease_acquired_at = NULL, lease_expires_at = NULL
+                    WHERE publish_intent_id = %s
+                    """,
+                    (UUID(lost_lease.intent_id),),
+                )
+            return PublishOutcome.SUCCEEDED
+
+        with pytest.raises(ApplicationError, match="lease was lost"):
+            await dispatcher.dispatch(lost_lease, loses_lease)
+
+    asyncio.run(
+        exercise(),
+        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+    )
+
+
+async def _success_publisher(_: IntentCommand) -> PublishOutcome:
+    return PublishOutcome.SUCCEEDED
+
+
 def _seed_approved_intent(database_url: str) -> dict[str, UUID]:
     identifiers = {
         "project_id": uuid4(),
@@ -389,7 +829,10 @@ def _seed_approved_intent(database_url: str) -> dict[str, UUID]:
     }
     digest = bytes.fromhex("31" * 32)
     account_hash = bytes.fromhex("51" * 32)
-    decided_at = datetime(2026, 8, 22, 1, 0, 0, tzinfo=UTC)
+    current = datetime.now(UTC)
+    decided_at = current.replace(microsecond=(current.microsecond // 1000) * 1000) - timedelta(
+        minutes=1
+    )
     expires_at = decided_at + timedelta(days=1)
     candidate_material = CandidateHashInputV1(
         title="Letter 1",
@@ -592,6 +1035,40 @@ def _seed_approved_intent(database_url: str) -> dict[str, UUID]:
     return identifiers
 
 
+def _new_command(
+    database_url: str,
+    identifiers: dict[str, UUID],
+    *,
+    schedule_hour: int,
+) -> IntentCommand:
+    schedule_slot = datetime.now(UTC).replace(
+        hour=schedule_hour, minute=0, second=0, microsecond=0
+    ) + timedelta(days=1)
+    with psycopg.connect(database_url) as connection:
+        candidate_hash_value, platform = connection.execute(
+            "SELECT candidate_hash, platform FROM platform_candidates WHERE id = %s",
+            (identifiers["candidate_id"],),
+        ).fetchone()
+    fingerprint = publish_request_fingerprint(
+        PublishRequestFingerprintInputV1(
+            candidate_hash=bytes(candidate_hash_value).hex(),
+            platform=platform,
+            account_id=identifiers["account_id"],
+            normalized_schedule_slot=schedule_slot,
+        )
+    ).sha256
+    return IntentCommand(
+        project_id=str(identifiers["project_id"]),
+        candidate_id=str(identifiers["candidate_id"]),
+        approval_snapshot_id=str(identifiers["approval_snapshot_id"]),
+        account_id=str(identifiers["account_id"]),
+        intent_id=str(uuid4()),
+        outbox_id=str(uuid4()),
+        request_fingerprint=fingerprint,
+        normalized_schedule_slot=schedule_slot.isoformat(),
+    )
+
+
 async def _exercise_real_workflow_activities(
     database_url: str, identifiers: dict[str, UUID]
 ) -> None:
@@ -605,6 +1082,20 @@ async def _exercise_real_workflow_activities(
     assert await activities.advance_candidate_state(transition) == 1
     assert await activities.advance_candidate_state(transition) == 1
 
+    schedule_slot = datetime(2026, 8, 22, 2, tzinfo=UTC)
+    with psycopg.connect(database_url) as connection:
+        candidate_hash_value, platform = connection.execute(
+            "SELECT candidate_hash, platform FROM platform_candidates WHERE id = %s",
+            (identifiers["candidate_id"],),
+        ).fetchone()
+    request_fingerprint = publish_request_fingerprint(
+        PublishRequestFingerprintInputV1(
+            candidate_hash=bytes(candidate_hash_value).hex(),
+            platform=platform,
+            account_id=identifiers["account_id"],
+            normalized_schedule_slot=schedule_slot,
+        )
+    ).sha256
     command = IntentCommand(
         project_id=str(identifiers["project_id"]),
         candidate_id=str(identifiers["candidate_id"]),
@@ -612,7 +1103,7 @@ async def _exercise_real_workflow_activities(
         account_id=str(identifiers["account_id"]),
         intent_id=str(uuid4()),
         outbox_id=str(uuid4()),
-        request_fingerprint="78" * 32,
+        request_fingerprint=request_fingerprint,
         normalized_schedule_slot="2026-08-22T02:00:00+00:00",
     )
     await activities.create_publish_intent_and_outbox(command)

@@ -64,8 +64,9 @@ class RecordingActivities:
         return value.expected_version + 1
 
     @activity.defn(name="create_publish_intent_and_outbox")
-    async def create_publish_intent_and_outbox(self, value: IntentCommand) -> None:
+    async def create_publish_intent_and_outbox(self, value: IntentCommand) -> IntentCommand:
         self.intents.append(value.intent_id)
+        return value
 
     @activity.defn(name="mock_publish")
     async def mock_publish(self, value: IntentCommand) -> str:

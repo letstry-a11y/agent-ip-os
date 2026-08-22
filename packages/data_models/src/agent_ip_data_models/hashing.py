@@ -185,6 +185,38 @@ def candidate_hash(value: CandidateHashInputV1) -> CanonicalHashV1:
     return hash_canonical_json(candidate_payload(value))
 
 
+class PublishRequestFingerprintInputV1(FrozenBoundaryModel):
+    """Stable identity inputs for one logical external publish action."""
+
+    schema_version: Literal[1] = 1
+    candidate_hash: Sha256Hex
+    platform: PreservedNonBlankText
+    account_id: UUID
+    normalized_schedule_slot: datetime
+
+
+def publish_request_payload(
+    value: PublishRequestFingerprintInputV1,
+) -> dict[str, CanonicalValue]:
+    """Build the normative logical-action fingerprint payload."""
+
+    return {
+        "account_id": str(value.account_id),
+        "candidate_hash": value.candidate_hash,
+        "normalized_schedule_slot": canonical_utc_milliseconds(value.normalized_schedule_slot),
+        "platform": value.platform,
+        "schema_version": value.schema_version,
+    }
+
+
+def publish_request_fingerprint(
+    value: PublishRequestFingerprintInputV1,
+) -> CanonicalHashV1:
+    """Compute the cross-runtime identity of one approved publish request."""
+
+    return hash_canonical_json(publish_request_payload(value))
+
+
 class ApprovalSnapshotHashInputV1(FrozenBoundaryModel):
     """All immutable fields bound by an approval hash; MVP accepts one approver."""
 

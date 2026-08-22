@@ -19,7 +19,7 @@
     "check:python:format": "uv run --locked ruff format --check apps/api/src packages/data_models/src packages/workflows/src tests scripts",
     "check:python:lint": "uv run --locked ruff check apps/api/src packages/data_models/src packages/workflows/src tests scripts",
     "check:python:types": "uv run --locked mypy apps/api/src packages/data_models/src packages/workflows/src scripts",
-    "check:python:test": "uv run --locked pytest tests/unit tests/workflow --cov=agent_ip_api --cov=agent_ip_data_models --cov=agent_ip_workflows --cov-report=term-missing --cov-fail-under=100",
+    "check:python:test": "uv run --locked pytest tests/unit tests/workflow tests/integration --cov=agent_ip_api --cov=agent_ip_data_models --cov=agent_ip_workflows --cov-report=term-missing --cov-fail-under=100",
     "check:web": "npm run check --workspace @agent-ip/web",
     "dev:api": "uv run uvicorn agent_ip_api.main:app --reload --host 127.0.0.1 --port 8000",
     "dev:web": "npm run dev --workspace @agent-ip/web",

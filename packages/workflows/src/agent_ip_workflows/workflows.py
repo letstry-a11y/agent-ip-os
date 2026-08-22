@@ -16,6 +16,7 @@ from agent_ip_workflows.models import (
     CandidateWorkflowResult,
     ContentWorkflowInput,
     ContentWorkflowResult,
+    IntentCommand,
     PublishOutcome,
     StateTransition,
 )
@@ -118,7 +119,7 @@ class PlatformCandidateWorkflow:
 
         await self._transition(workflow_input, "APPROVED")
         await self._transition(workflow_input, "READY_TO_INTENT")
-        await workflow.execute_activity(
+        bound_intent = await workflow.execute_activity(
             "create_publish_intent_and_outbox",
             resolution.intent,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
@@ -129,7 +130,7 @@ class PlatformCandidateWorkflow:
         try:
             raw_outcome = await workflow.execute_activity(
                 "mock_publish",
-                resolution.intent,
+                cast(IntentCommand, bound_intent),
                 start_to_close_timeout=ACTIVITY_TIMEOUT,
                 retry_policy=ACTIVITY_RETRY_POLICY,
             )
@@ -138,6 +139,8 @@ class PlatformCandidateWorkflow:
         outcome = PublishOutcome(cast(str, raw_outcome))
         if outcome is PublishOutcome.UNKNOWN:
             return await self._finish(workflow_input, "RECONCILIATION_REQUIRED")
+        if outcome is not PublishOutcome.SUCCEEDED:
+            return await self._finish(workflow_input, "PUBLISH_FAILED")
         return await self._finish(workflow_input, "PUBLISHED")
 
 

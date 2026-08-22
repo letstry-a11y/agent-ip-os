@@ -23,6 +23,7 @@ from agent_ip_data_models.hashing import (
     CandidateHashInputV1,
     CanonicalHashV1,
     CanonicalJsonError,
+    PublishRequestFingerprintInputV1,
     approval_snapshot_hash,
     approval_snapshot_payload,
     candidate_hash,
@@ -33,6 +34,8 @@ from agent_ip_data_models.hashing import (
     evaluate_approval,
     hash_canonical_json,
     normalize_sorted_tags,
+    publish_request_fingerprint,
+    publish_request_payload,
 )
 
 __all__ = [
@@ -56,6 +59,7 @@ __all__ = [
     "CandidateHashInputV1",
     "CanonicalHashV1",
     "CanonicalJsonError",
+    "PublishRequestFingerprintInputV1",
     "approval_snapshot_hash",
     "approval_snapshot_payload",
     "candidate_hash",
@@ -66,4 +70,6 @@ __all__ = [
     "evaluate_approval",
     "hash_canonical_json",
     "normalize_sorted_tags",
+    "publish_request_fingerprint",
+    "publish_request_payload",
 ]
