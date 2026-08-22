@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from typing import Protocol, cast, runtime_checkable
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from agent_ip_data_models import (
+    ProviderErrorCode,
+    ProviderFailureV1,
     ProviderJobStatus,
     ProviderJobV1,
     ProviderKind,
@@ -25,6 +28,7 @@ class Provider(Protocol):
     """Portable asynchronous generation provider."""
 
     kind: ProviderKind
+    provider_id: str
 
     async def submit(self, request: ProviderRequestV1) -> ProviderJobV1:
         """Accept an idempotent request and return its running job."""
@@ -173,6 +177,118 @@ class PrimaryMockProvider:
         if self.kind is ProviderKind.VIDEO:
             return {"artifact_key": f"mock/video/{request_hash}.mp4", "id": prefix}
         return {"artifact_key": f"mock/audio/{request_hash}.wav", "id": prefix}
+
+
+class SecondaryMockScenario(StrEnum):
+    """Deterministic alternate Provider outcomes for M2B contract tests."""
+
+    SUCCESS = "SUCCESS"
+    RATE_LIMIT = "RATE_LIMIT"
+    TRANSIENT = "TRANSIENT"
+    INVALID_OUTPUT = "INVALID_OUTPUT"
+
+
+class SecondaryMockProvider(PrimaryMockProvider):
+    """Behaviorally distinct Mock with two polls and typed failure samples."""
+
+    provider_id = "mock-secondary"
+    model_version = "m2b-01-v1"
+
+    def __init__(
+        self,
+        kind: ProviderKind,
+        *,
+        scenario: SecondaryMockScenario = SecondaryMockScenario.SUCCESS,
+    ) -> None:
+        super().__init__(kind)
+        self.model_id = f"alternate-{kind.value.lower()}-v1"
+        self.scenario = scenario
+        self._polls: dict[UUID, int] = {}
+
+    async def submit(self, request: ProviderRequestV1) -> ProviderJobV1:
+        """Submit through the shared contract and initialize alternate polling state."""
+
+        job = await super().submit(request)
+        self._polls.setdefault(job.job_id, 0)
+        return job
+
+    async def get_status(self, job_id: UUID) -> ProviderJobV1:
+        """Remain running for one poll, then succeed or emit a structured failure."""
+
+        job = self._required_job(job_id)
+        if job.status is not ProviderJobStatus.RUNNING:
+            return job
+        polls = self._polls[job_id] + 1
+        self._polls[job_id] = polls
+        if polls == 1:
+            return job
+        if self.scenario is SecondaryMockScenario.SUCCESS:
+            return await super().get_status(job_id)
+
+        code = ProviderErrorCode(self.scenario.value)
+        retryable = code in {
+            ProviderErrorCode.RATE_LIMIT,
+            ProviderErrorCode.TRANSIENT,
+        }
+        failure = ProviderFailureV1(
+            code=code,
+            message=f"synthetic {code.value.lower()} from secondary Mock",
+            retryable=retryable,
+            request_accepted=True,
+            retry_after_seconds=30 if code is ProviderErrorCode.RATE_LIMIT else None,
+            usage=job.usage,
+            rate_limit=job.rate_limit,
+        )
+        failed = ProviderJobV1.model_validate(
+            job.model_copy(
+                update={
+                    "status": ProviderJobStatus.FAILED,
+                    "failure": failure,
+                    "updated_at": datetime.now(UTC),
+                }
+            ).model_dump()
+        )
+        self._jobs[job_id] = failed
+        return failed
+
+    def _output(self, request_hash: str) -> dict[str, JsonValue]:
+        prefix = request_hash[:16]
+        if self.kind is ProviderKind.TEXT:
+            return {
+                "segments": [{"kind": "paragraph", "value": "Alternate Mock text."}],
+                "result_id": prefix,
+            }
+        extension = {
+            ProviderKind.IMAGE: "webp",
+            ProviderKind.VIDEO: "mkv",
+            ProviderKind.AUDIO: "flac",
+        }[self.kind]
+        return {
+            "artifacts": [f"mock/alternate/{self.kind.value.lower()}/{request_hash}.{extension}"],
+            "result_id": prefix,
+        }
+
+
+class ProviderRouter:
+    """Resolve an explicit Provider without changing business workflow semantics."""
+
+    def __init__(self, providers: tuple[Provider, ...]) -> None:
+        self._providers: dict[tuple[ProviderKind, str], Provider] = {}
+        for provider in providers:
+            key = (provider.kind, provider.provider_id)
+            if key in self._providers:
+                raise ValueError(
+                    f"duplicate Provider registration: {provider.kind}/{provider.provider_id}"
+                )
+            self._providers[key] = provider
+
+    def resolve(self, kind: ProviderKind, provider_id: str) -> Provider:
+        """Return only an explicitly registered Provider."""
+
+        try:
+            return self._providers[(kind, provider_id)]
+        except KeyError as error:
+            raise KeyError(f"Provider is not registered: {kind.value}/{provider_id}") from error
 
 
 class MockTextModelProvider(PrimaryMockProvider):

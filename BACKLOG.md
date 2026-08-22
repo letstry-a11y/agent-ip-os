@@ -32,10 +32,10 @@ Status values: `DONE`, `READY_FOR_REVIEW`, `READY`, `BLOCKED`, `NOT_STARTED`. `D
 | ID | Task | Dependencies | Status | Completion definition / evidence |
 |---|---|---|---|---|
 | M2-01 | Provider interfaces and primary Mock | M1-05 | DONE | Text/image/video/audio Protocols share strict request, async status, cancellation, cost, provenance, error, and rate-limit contracts; deterministic zero-network primary Mocks pass replay/cancel/fail-closed contract tests. See [M2-01 evidence](docs/acceptance/m2-01-provider-contracts.md). |
-| M2-00 | Select M2A or M2B from G1 | M2-01, D-004, D-005, D-006 | NOT_STARTED | Decision evidence records deployment region, legal availability, budget, and either approved real text Provider or explicit M2B fallback. |
+| M2-00 | Select M2A or M2B from G1 | M2-01, D-004, D-005, D-006 | DONE | Deployment region, legally approved Providers, and paid budget remain unapproved; the explicit local-Mock instruction and safe fallback select M2B without claiming real integration. See [M2B/M2-03 evidence](docs/acceptance/m2b-01-agent-contracts.md). |
 | M2A-01 | One approved text Provider | M2-00 selects M2A | NOT_STARTED | Sandbox invocation produces validated structured output, provenance, errors, latency, and cost; Mock remains usable; secrets stay brokered and redacted. |
-| M2B-01 | Second behavioral Mock/contract Provider | M2-00 selects M2B | NOT_STARTED | Different latency/error/format behavior and switching tests prove the business workflow is Provider-independent; documentation does not claim real integration. |
-| M2-03 | Six runtime contracts and schemas | M0-03 accepted | NOT_STARTED | Versioned role contracts define inputs, outputs, tools, scopes, forbidden actions, budget, timeout, retries, and escalation; schema/evaluation fixtures pass. |
+| M2B-01 | Second behavioral Mock/contract Provider | M2-00 selects M2B | DONE | Alternate two-poll Mock output/error behavior and explicit routing prove text/image/video/audio Provider switching without business-contract changes or real-integration claims. See [evidence](docs/acceptance/m2b-01-agent-contracts.md). |
+| M2-03 | Six runtime contracts and schemas | M0-03 accepted | DONE | One strict versioned config contains exactly the six MVP units with schemas, tools, scopes, global forbidden actions, zero-cost budget, timeout, bounded safe retries, escalation, and prompt versions. See [specification](docs/specs/agent-contracts-v1.md). |
 | M2-04 | AgentRuntime permissions, retries, cancellation, and trace | M2-03 and M2A-01 or M2B-01 | NOT_STARTED | Server-side authorization rejects forbidden tools; invalid output cannot advance state; bounded retries/cancellation/cost/source/prompt/model versions are traceable. |
 
 ## M3 — content and media factory

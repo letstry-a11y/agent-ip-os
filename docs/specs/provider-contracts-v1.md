@@ -56,3 +56,19 @@ network, file bytes, credential, sleep, or paid resource. It:
 
 The Mock proves the application boundary only. It is not evidence that any real Provider, region,
 model, media capability, price, or account has been approved.
+
+## M2B alternate Mock and routing
+
+While G1 decisions remain open, `mock-secondary` is the explicit M2B fallback. It implements the
+same portable contract but differs observably from the primary Mock:
+
+- one status poll remains `RUNNING`; the second produces a terminal result;
+- success uses segmented text or an artifact list rather than the primary output shape;
+- deterministic `RATE_LIMIT`, `TRANSIENT`, and `INVALID_OUTPUT` samples return typed failed jobs;
+- rate-limit and transient failures are retryable, invalid output is permanent, and only the
+  rate-limit sample supplies `retry_after_seconds`;
+- the Provider router resolves an explicit `(kind, provider_id)` pair, rejects duplicates, and
+  fails closed when a Provider is unregistered.
+
+Both Mocks remain synthetic, in memory, zero cost, and network free. Switching them changes no
+workflow state or public Provider job schema and is not described as a real integration.

@@ -9,9 +9,9 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 | D-001 | G0 project boundary | Confirm the first content platform and its technical delivery branch. | Before M1-07 platform qualification probe; hard gate before M5 branch | Generate platform-neutral core plus complete publish packages; perform no real upload. | DECIDED | Xiaohongshu is the first content platform; package/manual publishing is the default until official generic note-publishing Scope is evidenced. |
 | D-002 | G0 project boundary | Confirm the launch column and whether/when to add a second column; keep the source-content MVP within image/text plus one 30-second vertical video. | Before M3-01 | Use synthetic fixtures; do not introduce an unapproved second public column. | DECIDED | Fixed launch column: `她写给世界的信`; second column remains unapproved pending later confirmation or first-round evidence. |
 | D-003 | G0 rights boundary | Authorize identity-derived virtual portrait use with the specific rights holder and written purpose/platform/term/provider/training/derivative/commercial/revocation scope. | Before any reference-image intake or generation; hard gate before M3-06 | Use synthetic, non-identifying test assets; keep real face/voice storage disabled. | BLOCKED | Founder reports the portrait subject agrees in principle. Activation still requires the subject's signed [scope checklist](docs/rights/身份衍生虚拟AI肖像授权与撤回清单_v1.md) plus approved Provider/storage details. |
-| D-004 | G1 deployment | Identify deployment主体 and actual service region. | End of week 1 / before M2-00 | Run locally with Mock Providers; no region-sensitive external service. | OPEN | Founders |
-| D-005 | G1 Provider | Approve legally usable text, image, video, and audio Provider candidates for that deployment region. | Before M2-00 | Choose M2B and implement two behavioral Mock/contract Providers only. | OPEN | Founders, with terms/privacy evidence |
-| D-006 | G1 budget | Set monthly infrastructure/model/media budget and per-content video-generation ceiling. | Before any paid Provider or cloud task | Paid calls disabled; local Mock-only. | OPEN | Founders |
+| D-004 | G1 deployment | Identify deployment主体 and actual service region. | End of week 1 / before a real Provider | Run locally with Mock Providers; no region-sensitive external service. | OPEN | Founders; M2B selected while region remains unspecified. |
+| D-005 | G1 Provider | Approve legally usable text, image, video, and audio Provider candidates for that deployment region. | Before a real Provider | Choose M2B and implement two behavioral Mock/contract Providers only. | OPEN | Founders; M2B contracts implemented without a real Provider claim. |
+| D-006 | G1 budget | Set monthly infrastructure/model/media budget and per-content video-generation ceiling. | Before any paid Provider or cloud task | Paid calls disabled; local Mock-only. | OPEN | Founders; configured Agent limits remain zero under M2B. |
 | D-007 | G2 platform qualification | Record whether the chosen platform supplied a test account, app, OAuth callback domain, exact Scope, and API approval. | End of week 2 / before M5-00 | Choose M5B publish-package + manual reconciliation. | OPEN | Platform account holder; M1-07 documentation probe found no project grant and selected M5B in [qualification evidence](docs/acceptance/m1-07-platform-qualification.md). |
 | D-008 | T3 governance | Register two distinct human approvers with MFA and confirm the initiator cannot self-approve. | Before enabling any T3 production action | Keep every T3 production action disabled. | OPEN | Both founders |
 | D-009 | Repository operations | Decide remote visibility, hosted CI, and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | DECIDED | Founder changed `letstry-a11y/agent-ip-os` to public on 2026-08-20 after a credential/PII scan; protected `main` requires PRs and the `quality` check. |
@@ -58,6 +58,19 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Safe state while blocked: Do not upload, ingest, transform, generate from, or publish any identity reference. Use non-identifying synthetic fixtures only.
 - Impact: D-003 revision 1 is superseded as product direction but remains the enforced technical fallback until all activation requirements pass. Identity-derived generation is R3, requires per-use evidence and human approval, must be clearly marked as AI-generated, and cannot be presented as a real photograph.
 - Consent progress update (2026-08-19): Founder reports that the portrait subject agrees in principle. This narrows the open issue but does not replace the subject's completed signature, named Provider/data terms, or secure storage verification. Draft authorization: [身份衍生虚拟AI肖像授权与撤回清单（V1）](docs/rights/身份衍生虚拟AI肖像授权与撤回清单_v1.md).
+
+### G1 fallback snapshot 1 — M2B selected without real Provider authority
+
+- Status: D-004, D-005, and D-006 remain OPEN; safe fallback activated
+- Date: 2026-08-23
+- Instruction: Continue unattended local Mock and safe engineering work; do not require or use a
+  real account, paid call, cloud resource, or external side effect.
+- Result: Deployment region, legally approved Provider candidates, and paid budget are not
+  evidenced. M2B is explicitly selected for this MVP iteration with primary and secondary
+  behavioral Mocks, zero configured Agent cost, and no real Provider claim.
+- Effective scope: M2-00, M2B-01, M2-03, M2-04, and downstream local/Mock work until superseded by
+  dated founder approval for deployment region, Provider terms/privacy, and budget.
+- Evidence: [M2B/M2-03 acceptance](docs/acceptance/m2b-01-agent-contracts.md).
 
 ### D-007 qualification snapshot 1 — Xiaohongshu grant not evidenced
 
