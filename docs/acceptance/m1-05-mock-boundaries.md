@@ -1,7 +1,7 @@
 # M1-05 deterministic Mock boundary evidence
 
 - Captured: 2026-08-22 (Asia/Shanghai)
-- Result: **PASS / READY FOR REVIEW**
+- Result: **PASS / ACCEPTED**
 - Safety boundary: synthetic, non-identifying fixtures with no Provider, platform, network,
   asset bytes, credentials, portrait, or voice input
 
@@ -38,10 +38,12 @@ The persistent Temporal restart test was stopped after the known Windows develop
 startup wait reproduced. It changes no M1-05 behavior; the required scenario passed in the
 hosted Linux CI evidence above.
 
-## Human review boundary
+## Human acceptance
 
-Confirm that immediate deterministic timeout/failure injection is preferable to sleeping,
-that USD microunits are adequate test-only accounting evidence, and that `LOST_RESPONSE`
-must remain platform-only, non-retryable, and reconciliation-required. Review does not
-authorize a real Provider, media generation, portrait processing, platform login, or
-publication.
+On 2026-08-22 the founder confirmed that timeout/failure injection should remain immediate
+and deterministic rather than sleeping, integer USD microunits are adequate for Mock-only
+cost evidence, and `LOST_RESPONSE` must remain platform-only, non-retryable, and
+reconciliation-required.
+
+Acceptance does not authorize a real Provider, media generation, portrait processing,
+platform login, or publication.
