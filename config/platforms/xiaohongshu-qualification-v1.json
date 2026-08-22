@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "platform": "xiaohongshu",
+  "captured_at": "2026-08-22T15:10:00Z",
+  "official_sources": [
+    {
+      "title": "Xiaohongshu Share Open Platform",
+      "url": "https://agora.xiaohongshu.com/",
+      "finding": "Client SDK flow into Xiaohongshu App publishing UI; not a server publish grant."
+    },
+    {
+      "title": "Xiaohongshu Share SDK iOS guide",
+      "url": "https://agora.xiaohongshu.com/doc/ios",
+      "finding": "Application registration, AppKey, permission review, and Universal Link are required."
+    },
+    {
+      "title": "Xiaohongshu Share SDK Android guide",
+      "url": "https://agora.xiaohongshu.com/doc/android",
+      "finding": "Application/package information and an issued AppKey are required."
+    },
+    {
+      "title": "Xiaohongshu Share SDK FAQ",
+      "url": "https://agora.xiaohongshu.com/doc/qa",
+      "finding": "The SDK opens the App quick-publish flow; automatic title and caption filling is restricted."
+    },
+    {
+      "title": "Xiaohongshu Mini Program certification rules",
+      "url": "https://miniapp.xiaohongshu.com/doc/DC356986",
+      "finding": "Mini Program onboarding is organization-qualified and does not evidence generic creator note publishing."
+    }
+  ],
+  "account_evidence": {
+    "test_account_evidenced": false,
+    "developer_app_evidenced": false,
+    "callback_domain_evidenced": false,
+    "exact_scopes": [],
+    "api_approval_evidenced": false,
+    "explicit_probe_authorization_evidenced": false
+  },
+  "capability_observations": {
+    "client_share_sdk": "DOCUMENTED_REVIEW_GATED_HUMAN_FLOW",
+    "generic_server_note_publish_api": "NOT_EVIDENCED",
+    "automatic_title_caption_fill": "RESTRICTED",
+    "current_project_app_key": "NOT_EVIDENCED"
+  },
+  "minimal_probe": {
+    "mode": "DOCUMENTATION_ONLY",
+    "result": "NOT_RUN_NO_AUTHORIZED_SCOPE",
+    "external_requests": 0
+  },
+  "selected_branch": "M5B",
+  "fallback": "PUBLISH_PACKAGE_AND_MANUAL_RECONCILIATION"
+}

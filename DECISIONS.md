@@ -12,7 +12,7 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 | D-004 | G1 deployment | Identify deployment主体 and actual service region. | End of week 1 / before M2-00 | Run locally with Mock Providers; no region-sensitive external service. | OPEN | Founders |
 | D-005 | G1 Provider | Approve legally usable text, image, video, and audio Provider candidates for that deployment region. | Before M2-00 | Choose M2B and implement two behavioral Mock/contract Providers only. | OPEN | Founders, with terms/privacy evidence |
 | D-006 | G1 budget | Set monthly infrastructure/model/media budget and per-content video-generation ceiling. | Before any paid Provider or cloud task | Paid calls disabled; local Mock-only. | OPEN | Founders |
-| D-007 | G2 platform qualification | Record whether the chosen platform supplied a test account, app, OAuth callback domain, exact Scope, and API approval. | End of week 2 / before M5-00 | Choose M5B publish-package + manual reconciliation. | OPEN | Platform account holder |
+| D-007 | G2 platform qualification | Record whether the chosen platform supplied a test account, app, OAuth callback domain, exact Scope, and API approval. | End of week 2 / before M5-00 | Choose M5B publish-package + manual reconciliation. | OPEN | Platform account holder; M1-07 documentation probe found no project grant and selected M5B in [qualification evidence](docs/acceptance/m1-07-platform-qualification.md). |
 | D-008 | T3 governance | Register two distinct human approvers with MFA and confirm the initiator cannot self-approve. | Before enabling any T3 production action | Keep every T3 production action disabled. | OPEN | Both founders |
 | D-009 | Repository operations | Decide remote visibility, hosted CI, and branch protection. | After local M0 acceptance | Keep local Git only; do not transmit repository content. | DECIDED | Founder changed `letstry-a11y/agent-ip-os` to public on 2026-08-20 after a credential/PII scan; protected `main` requires PRs and the `quality` check. |
 | D-010 | M0 acceptance | Review PRD, lifecycle specification, system context, data model, and ADRs; accept or request changes. | Before M0-04 is treated as downstream implementation | Specifications stay `ready for review`; no application setup is claimed complete. | DECIDED | Founder instructed Codex to continue the plan on 2026-08-19; M0-03 is accepted and M0-04 may proceed under recorded safe fallbacks. |
@@ -58,6 +58,16 @@ Status values: `OPEN`, `DECIDED`, `DEFERRED`, `BLOCKED`. An open decision uses t
 - Safe state while blocked: Do not upload, ingest, transform, generate from, or publish any identity reference. Use non-identifying synthetic fixtures only.
 - Impact: D-003 revision 1 is superseded as product direction but remains the enforced technical fallback until all activation requirements pass. Identity-derived generation is R3, requires per-use evidence and human approval, must be clearly marked as AI-generated, and cannot be presented as a real photograph.
 - Consent progress update (2026-08-19): Founder reports that the portrait subject agrees in principle. This narrows the open issue but does not replace the subject's completed signature, named Provider/data terms, or secure storage verification. Draft authorization: [身份衍生虚拟AI肖像授权与撤回清单（V1）](docs/rights/身份衍生虚拟AI肖像授权与撤回清单_v1.md).
+
+### D-007 qualification snapshot 1 — Xiaohongshu grant not evidenced
+
+- Status: OPEN; safe fallback confirmed
+- Date: 2026-08-22
+- Evidence collector: Codex documentation-only probe; account decision remains with the platform account holder
+- Result: Official Xiaohongshu sources document a review-gated client Share SDK that opens the App publishing flow, but no allowlisted test account, approved project app/AppKey, callback domain, exact generic note-publishing Scope, account-specific API approval, or explicitly authorized minimal API probe was provided for this project.
+- Effective scope and expiry: Current M5 planning until superseded by a new dated, account-specific qualification record.
+- Impacted Backlog / specifications: M1-07 is complete and selects the M5B package/manual-reconciliation fallback. D-007 stays open; M5A remains unavailable. The client Share SDK is not treated as server-side automated publication.
+- Evidence: [M1-07 acceptance](docs/acceptance/m1-07-platform-qualification.md) and [platform qualification v1](docs/specs/platform-qualification-v1.md).
 
 ### D-010 — M0-03 specifications accepted
 
