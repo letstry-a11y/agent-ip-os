@@ -1,8 +1,8 @@
 # Core data model
 
-- Status: M1-01 implemented; founder review pending
-- Version: 1.0
-- Related: [MVP PRD](../product/prd-mvp.md), [content lifecycle](../specs/content-lifecycle.md), [ADR-0004](../adr/0004-postgresql-authority-and-deferred-vectors.md)
+- Status: M1-01 physical model and M1-03 canonical bindings implemented; founder review pending
+- Version: 1.1
+- Related: [MVP PRD](../product/prd-mvp.md), [content lifecycle](../specs/content-lifecycle.md), [canonical JSON v1](../specs/canonical-json-v1.md), [ADR-0004](../adr/0004-postgresql-authority-and-deferred-vectors.md)
 
 ## Modeling rules
 
@@ -101,6 +101,13 @@ rows instead of mutating frozen payloads.
 Migration `0003` adds the explicit content-version binding that every platform candidate
 requires. It refuses to infer a version if a pre-release database already contains a
 candidate, because silently guessing the source version would create false approval evidence.
+
+M1-03 gives candidate and approval hashes one cross-runtime byte contract. One authorized
+human approval is sufficient during early/MVP operation. Migration `0004` does not require
+two approvers; it only prevents the same subject from being counted twice if a future policy
+adds a second approver. Runtime evaluation fails closed when the snapshot hash, decision,
+expiry, candidate/report/policy/account binding, or approved action no longer matches current
+authoritative values.
 
 `publish_intents.outbox_message_id` and `outbox_messages.publish_intent_id` form deferred,
 unique, project-scoped foreign keys. Both rows can be inserted in either order inside one

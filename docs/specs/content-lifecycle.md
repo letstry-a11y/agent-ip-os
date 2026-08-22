@@ -1,7 +1,7 @@
 # Content and platform-candidate lifecycle
 
-- Status: Ready for founder review
-- Version: 0.1
+- Status: M1-03 identity/invalidation rules implemented; founder review pending
+- Version: 0.2
 - Normative for: M1 workflow, approval, outbox, reconciliation, stop, and later publishing tasks
 - Derived from: [technical baseline](../baseline/AI超级IP全Agent公司技术方案_v1.md)
 
@@ -81,10 +81,10 @@ For a package-only branch, `SCHEDULED → PACKAGE_READY → PACKAGE_DELIVERED �
 
 | Transition | Mandatory guards / effects |
 |---|---|
-| Freeze candidate | Canonical payload contains platform, account, title, caption, normalized sorted tags, ordered asset hashes, disclosure, policy version, and schedule; object digests exist. |
+| Freeze candidate | Canonical payload contains platform, account, title, caption, normalized sorted tags, ordered asset hashes, disclosure, and policy version; object digests exist. A schedule is frozen separately and bound by the later request fingerprint. |
 | Checks advance | Structured report valid and refers to the frozen candidate hash/final artifact closure; unknown/missing/expired evidence blocks. |
 | Risk → approval | Required reports and hashes exist; R4 cannot request an override to publish; MVP R0/R1/R2 all require final approval. R3 follows explicit per-item human rules and never auto-publishes. |
-| Approve | Authenticated authorized human, not Agent/service; candidate/reports/policy/account unchanged; approval records actor/time/expiry. T3 requires two distinct MFA humans and initiator cannot self-approve. |
+| Approve | During early/MVP operation, one authenticated authorized human is sufficient; Agent/service identities cannot approve. Candidate/reports/policy/account must be unchanged and the approval records actor/time/expiry. Real T3 actions remain disabled; a later production policy may require two distinct MFA humans after D-008. |
 | Approval → intent | Same transaction revalidates candidate hash, report hashes, approval validity/expiry, policy, account/Scope, global/account stop, budget, and repost semantics; creates intent and outbox atomically. |
 | Scheduled → publishing | Worker obtains short lease and repeats candidate/approval/stop/account/budget checks immediately before request. |
 | Publishing → retry | Only classified transient failures with a known-not-accepted result may retry the same intent within bounds. Unknown outcome enters reconciliation, not retry. |
@@ -112,7 +112,7 @@ request_fingerprint = sha256(
 )
 ```
 
-M1-03 must specify byte-level canonical JSON rules for UTF-8, Unicode normalization, object-key ordering, numbers, booleans, nulls, time zones/timestamps, and absence versus null before implementation. The approval snapshot also binds fact-report hash, rights-manifest hash, risk-report hash, policy/rules version, account, approver(s), approved action, and expiry.
+M1-03 implements the byte-level rules in [canonical JSON and approval binding v1](canonical-json-v1.md): UTF-8 without BOM/newline, Unicode NFC, UTF-8 byte key ordering, safe integers, exact booleans/null, UTC millisecond timestamps, and distinct absence versus null. The approval snapshot binds the candidate, fact-report, rights-manifest, risk-report, policy, account, action, distinct human approver(s), decision time, and expiry. Its own hash is recomputed before use.
 
 Any bound value change invalidates the approval and requires a new immutable candidate/report/approval chain. A legitimate repost creates a new `publish_intent_id`, explicit reason, and separately approved schedule; it does not mutate uniqueness data.
 

@@ -93,6 +93,7 @@ def test_versioned_schemas_round_trip_without_losing_domain_types() -> None:
             caption="第一封信",
             normalized_tags=("AI分身", "写作"),
             ordered_artifact_ids=(artifact_id,),
+            ordered_artifact_hashes=(HASH,),
             ai_disclosure="AI辅助视觉",
             policy_version="policy-v1",
             canonical_payload={"title": "她写给世界的信"},
@@ -209,3 +210,27 @@ def test_sha256_and_schema_versions_are_strict() -> None:
     values["version"] = "1"
     with pytest.raises(ValidationError, match="Input should be a valid integer"):
         ContentVersionV1.model_validate(values)
+
+
+def test_approval_snapshot_rejects_duplicate_approvers() -> None:
+    actor_id = uuid4()
+    with pytest.raises(ValidationError, match="approver subject IDs must be distinct"):
+        ApprovalSnapshotV1(
+            id=uuid4(),
+            project_id=uuid4(),
+            approval_request_id=uuid4(),
+            candidate_id=uuid4(),
+            account_id=uuid4(),
+            decision=ApprovalDecision.APPROVED,
+            candidate_hash=HASH,
+            fact_report_hash=HASH,
+            rights_manifest_hash=HASH,
+            risk_report_hash=HASH,
+            account_hash=HASH,
+            policy_version="policy-v1",
+            approved_action="PACKAGE_EXPORT",
+            approver_subject_ids=(actor_id, actor_id),
+            expires_at=NOW.replace(day=21),
+            decided_at=NOW,
+            snapshot_hash=HASH,
+        )
