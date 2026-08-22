@@ -1,7 +1,7 @@
 # M1-04 publish dispatch evidence
 
 - Captured: 2026-08-22 (Asia/Shanghai)
-- Result: **IN PROGRESS — local PostgreSQL acceptance passed**
+- Result: **PASS / READY FOR REVIEW**
 - Safety boundary: isolated PostgreSQL databases and a network-free Mock publisher only
 
 ## Implemented
@@ -29,12 +29,16 @@
 6. The publish Activity and dispatcher modules reached 100% statement/branch coverage; Ruff
    and strict mypy passed.
 
-## Remaining before READY_FOR_REVIEW
+[Pull request #7](https://github.com/letstry-a11y/agent-ip-os/pull/7) ran the complete Linux
+quality gate, including persistent Temporal restart, PostgreSQL integration, 100% workspace
+coverage, repository/web checks, Compose validation, and the production web build. The
+implementation [hosted CI run #18](https://github.com/letstry-a11y/agent-ip-os/actions/runs/32569912896)
+completed successfully in 1 minute 30 seconds.
 
-- The pre-existing persistent Temporal restart test currently cannot start its downloaded
-  Windows dev server because that executable exits during resource detection. PostgreSQL
-  acceptance is unaffected, but the complete repository gate must be rerun in hosted Linux
-  CI or after the local Temporal executable issue is resolved.
-- Run the web/format/repository gates, inspect the final diff, then create a protected PR.
-- Human review must confirm the stop linearization point and that UNKNOWN always requires
-  reconciliation. This work does not authorize a Provider, platform login, or publication.
+## Human review boundary
+
+The reviewer should confirm that the final pre-request gate is the stop linearization point,
+that UNKNOWN always requires reconciliation, and that the five-second lease is acceptable
+for the Mock/MVP load. The downloaded Temporal dev server still has a Windows-only startup
+issue on this host; the same persistent-restart scenario passed in hosted Linux CI. This
+review does not authorize a Provider, platform login, or publication.
