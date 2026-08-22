@@ -23,6 +23,14 @@ NonEmptyText = Annotated[str, StringConstraints(strip_whitespace=True, min_lengt
 Sha256Hex = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 
 
+def require_distinct_approvers(value: tuple[UUID, ...]) -> tuple[UUID, ...]:
+    """Reject duplicate humans in an approval boundary."""
+
+    if len(set(value)) != len(value):
+        raise ValueError("approver subject IDs must be distinct")
+    return value
+
+
 class FrozenBoundaryModel(BaseModel):
     """Strict immutable base for durable public payloads."""
 
@@ -172,7 +180,8 @@ class PlatformCandidateV1(FrozenBoundaryModel):
     title: NonEmptyText
     caption: str
     normalized_tags: tuple[NonEmptyText, ...]
-    ordered_artifact_ids: tuple[UUID, ...]
+    ordered_artifact_ids: tuple[UUID, ...] = Field(min_length=1)
+    ordered_artifact_hashes: tuple[Sha256Hex, ...] = Field(min_length=1)
     ai_disclosure: NonEmptyText
     scheduled_at: AwareDatetime | None = None
     schedule_time_zone: NonEmptyText | None = None
@@ -199,7 +208,11 @@ class ApprovalSnapshotV1(FrozenBoundaryModel):
     account_hash: Sha256Hex
     policy_version: NonEmptyText
     approved_action: NonEmptyText
-    approver_subject_ids: tuple[UUID, ...] = Field(min_length=1, max_length=2)
+    approver_subject_ids: Annotated[
+        tuple[UUID, ...],
+        Field(min_length=1, max_length=2),
+        AfterValidator(require_distinct_approvers),
+    ]
     expires_at: AwareDatetime
     decided_at: AwareDatetime
     snapshot_hash: Sha256Hex

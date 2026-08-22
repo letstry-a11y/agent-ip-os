@@ -1,0 +1,85 @@
+{
+  "spec_version": 1,
+  "canonical_vectors": [
+    {
+      "name": "object-order-primitives-and-escapes",
+      "input": {
+        "z": null,
+        "a": true,
+        "n": -42,
+        "array": [3, false, "line\nbreak"]
+      },
+      "canonical_json": "{\"a\":true,\"array\":[3,false,\"line\\nbreak\"],\"n\":-42,\"z\":null}",
+      "sha256": "4b5f70a14dca7f076767eb08285c3e26008cd2b0c555e2e8381c61e053d8161e"
+    },
+    {
+      "name": "unicode-nfc-and-utf8-key-order",
+      "input": {
+        "é": "Cafe\u0301",
+        "😀": "世界",
+        "A": "Å"
+      },
+      "canonical_json": "{\"A\":\"Å\",\"é\":\"Café\",\"😀\":\"世界\"}",
+      "sha256": "82fae6fdcd95eee6a47f3da2e98719fb88dd212e90f6f245a251fabe8965451f"
+    },
+    {
+      "name": "absent-member",
+      "input": { "value": 1 },
+      "canonical_json": "{\"value\":1}",
+      "sha256": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+    },
+    {
+      "name": "explicit-null-member",
+      "input": { "value": 1, "optional": null },
+      "canonical_json": "{\"optional\":null,\"value\":1}",
+      "sha256": "a5955e94e233f39c86f1910b6320e4e03c714ce92fd96ba731c488ec1ad036c7"
+    },
+    {
+      "name": "safe-integer-boundaries",
+      "input": [9007199254740991, -9007199254740991, 0],
+      "canonical_json": "[9007199254740991,-9007199254740991,0]",
+      "sha256": "b80bd42d5351670aefcf3e66750d64961095073307e52f6d6b3554d97ed6578f"
+    }
+  ],
+  "candidate_vector": {
+    "input": {
+      "title": "她写给世界的信",
+      "caption": "Cafe\u0301 与世界",
+      "tags": [" 写作 ", "AI分身", "写作", "A\u030Angstrom"],
+      "ordered_asset_hashes": [
+        "0101010101010101010101010101010101010101010101010101010101010101",
+        "fefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefe"
+      ],
+      "ai_disclosure": "AI辅助视觉",
+      "platform": "xiaohongshu_package",
+      "account_id": "44444444-4444-4444-8444-444444444444",
+      "policy_version": "xh-v1"
+    },
+    "canonical_json": "{\"account_id\":\"44444444-4444-4444-8444-444444444444\",\"ai_disclosure\":\"AI辅助视觉\",\"caption\":\"Café 与世界\",\"ordered_asset_hashes\":[\"0101010101010101010101010101010101010101010101010101010101010101\",\"fefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefe\"],\"platform\":\"xiaohongshu_package\",\"policy_version\":\"xh-v1\",\"sorted_tags\":[\"AI分身\",\"Ångstrom\",\"写作\"],\"title\":\"她写给世界的信\"}",
+    "sha256": "26bbf9c419765c609cee246b5144e0802270b193344de7da58246172c75e54af"
+  },
+  "approval_vector": {
+    "input": {
+      "project_id": "11111111-1111-4111-8111-111111111111",
+      "approval_request_id": "22222222-2222-4222-8222-222222222222",
+      "candidate_id": "33333333-3333-4333-8333-333333333333",
+      "account_id": "44444444-4444-4444-8444-444444444444",
+      "decision": "APPROVED",
+      "candidate_hash": "26bbf9c419765c609cee246b5144e0802270b193344de7da58246172c75e54af",
+      "fact_report_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "rights_manifest_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "risk_report_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "account_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+      "policy_version": "xh-v1",
+      "approved_action": "PACKAGE_EXPORT",
+      "approver_subject_ids": [
+        "66666666-6666-4666-8666-666666666666",
+        "55555555-5555-4555-8555-555555555555"
+      ],
+      "expires_at": "2026-08-23T08:30:00+08:00",
+      "decided_at": "2026-08-22T00:15:00Z"
+    },
+    "canonical_json": "{\"account_hash\":\"4444444444444444444444444444444444444444444444444444444444444444\",\"account_id\":\"44444444-4444-4444-8444-444444444444\",\"approval_request_id\":\"22222222-2222-4222-8222-222222222222\",\"approved_action\":\"PACKAGE_EXPORT\",\"approver_subject_ids\":[\"55555555-5555-4555-8555-555555555555\",\"66666666-6666-4666-8666-666666666666\"],\"candidate_hash\":\"26bbf9c419765c609cee246b5144e0802270b193344de7da58246172c75e54af\",\"candidate_id\":\"33333333-3333-4333-8333-333333333333\",\"decided_at\":\"2026-08-22T00:15:00.000Z\",\"decision\":\"APPROVED\",\"expires_at\":\"2026-08-23T00:30:00.000Z\",\"fact_report_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"policy_version\":\"xh-v1\",\"project_id\":\"11111111-1111-4111-8111-111111111111\",\"rights_manifest_hash\":\"2222222222222222222222222222222222222222222222222222222222222222\",\"risk_report_hash\":\"3333333333333333333333333333333333333333333333333333333333333333\",\"schema_version\":1}",
+    "sha256": "e9e5d792d96245874c3840238a6388dfa619db19e0faea79c18afb513d429021"
+  }
+}

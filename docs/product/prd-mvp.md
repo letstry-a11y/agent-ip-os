@@ -81,7 +81,7 @@ The public audience is the subject of content strategy, not a direct console use
 
 ## 6. Non-functional requirements
 
-- **Safety:** R3/R4 unauthorized publish = 0; external action defaults disabled; T3 requires two distinct MFA humans.
+- **Safety:** R3/R4 unauthorized publish = 0; external action defaults disabled. Early/MVP review requires one authorized human final approval. Real T3 actions remain disabled; if later enabled under D-008, their production policy may require two distinct MFA humans.
 - **Reliability:** workflow state loss = 0; duplicate publish = 0; every attempt traceable; retries categorized and bounded.
 - **Stop SLO:** stop signal to blocking a not-yet-submitted new publish request has P95 ≤5 seconds under measured MVP load. Already accepted platform work follows reconciliation/cancel/takedown rather than an impossible instant guarantee.
 - **Security/privacy:** no plaintext platform token in logs/database business fields/Agent context; raw face/voice data is isolated and omitted from ordinary trace/vector/test data.
