@@ -19,7 +19,7 @@ Status values: `DONE`, `READY_FOR_REVIEW`, `READY`, `BLOCKED`, `NOT_STARTED`. `D
 
 | ID | Task | Dependencies | Status | Completion definition / evidence |
 |---|---|---|---|---|
-| M1-01 | Core schemas and migrations | M0-03 accepted, M0-04 | NOT_STARTED | Content, version, artifact, rights, candidate, approval, publish-intent/outbox, and audit schemas have forward migrations, constraints, and migration round-trip/forward-fix tests. |
+| M1-01 | Core schemas and migrations | M0-03 accepted, M0-04 | DONE | Content, version, artifact, rights, candidate, approval, publish-intent/outbox, and audit schemas have shared versioned contracts, forward-only migrations, project-scoped constraints, immutable evidence guards, checksum enforcement, and real-PostgreSQL forward-upgrade tests recorded in [M1-01 evidence](docs/acceptance/m1-01-core-schema.md). |
 | M1-02 | Temporal parent/child workflow | M1-01, M0-05 | NOT_STARTED | Draft → immutable candidate → checks → approval wait → outbox → Mock publish survives worker/Temporal restart; terminal and retry states are tested. |
 | M1-03 | Canonical JSON, candidate hash, and approval snapshot | M1-01 | NOT_STARTED | Cross-runtime golden vectors cover ordering, Unicode, time, null, tags, and assets; any bound candidate/report/policy/account/expiry change invalidates approval. |
 | M1-04 | Outbox, idempotency, and stop flags | M1-02, M1-03 | NOT_STARTED | Transactional outbox plus lease prevents duplicates under 100 concurrent repeats; global/account stop blocks in-flight worker before external request; unknown outcome requires reconciliation. |

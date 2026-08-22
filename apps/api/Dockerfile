@@ -17,7 +17,9 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock .python-version ./
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
+COPY packages/data_models/pyproject.toml packages/data_models/pyproject.toml
 COPY apps/api/src apps/api/src
+COPY packages/data_models/src packages/data_models/src
 
 RUN uv sync --locked --no-dev --python /usr/local/bin/python3.12 --no-managed-python --no-python-downloads \
     && groupadd --system agent-ip \

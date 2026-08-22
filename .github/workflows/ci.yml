@@ -12,6 +12,20 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16.13-alpine3.23
+        env:
+          POSTGRES_DB: agent_ip
+          POSTGRES_PASSWORD: ci_test_only
+          POSTGRES_USER: agent_ip
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U agent_ip -d agent_ip"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -38,6 +52,11 @@ jobs:
 
       - name: Run repository quality gates
         run: npm run check
+
+      - name: Run PostgreSQL migration integration tests
+        env:
+          DATABASE_URL: postgresql://agent_ip:ci_test_only@127.0.0.1:5432/agent_ip
+        run: npm run check:integration
 
       - name: Validate Docker Compose definition
         run: npm run stack:config

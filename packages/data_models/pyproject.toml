@@ -1,0 +1,13 @@
+[project]
+name = "agent-ip-data-models"
+version = "0.1.0"
+description = "Versioned domain boundary schemas for Agent IP OS"
+requires-python = "==3.12.*"
+dependencies = ["pydantic>=2.11,<3"]
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_ip_data_models"]
