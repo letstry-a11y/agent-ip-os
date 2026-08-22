@@ -1,0 +1,20 @@
+[project]
+name = "agent-ip-workflows"
+version = "0.1.0"
+description = "Deterministic Temporal workflows and PostgreSQL activities for Agent IP OS"
+requires-python = "==3.12.*"
+dependencies = [
+  "agent-ip-data-models",
+  "psycopg[binary]>=3.2,<4",
+  "temporalio>=1.31,<2",
+]
+
+[tool.uv.sources]
+agent-ip-data-models = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_ip_workflows"]

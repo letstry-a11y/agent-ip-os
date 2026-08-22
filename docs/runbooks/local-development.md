@@ -2,12 +2,12 @@
 
 ## Boundary
 
-This runbook starts the M0-05 development stack only. It uses Mock/package-only behavior,
+This runbook starts the local M0-05/M1 development stack. It uses Mock/package-only behavior,
 sets `DRY_RUN=true`, keeps external side effects disabled, and binds every published port to
 `127.0.0.1`. It does not authorize Provider calls, platform publishing, portrait processing,
 or production deployment.
 
-The five services are:
+The six services are:
 
 | Service | Default URL/port | Purpose |
 |---|---:|---|
@@ -16,8 +16,11 @@ The five services are:
 | PostgreSQL | `127.0.0.1:5432` | Authoritative transactional domain data |
 | Garage | `http://127.0.0.1:3900` | Local S3-compatible object storage |
 | Temporal | `127.0.0.1:7233`; UI `http://127.0.0.1:8233` | Local durable-workflow development server |
+| Workflow worker | Internal queue `agent-ip-content-v1` | Durable parent/child orchestration with PostgreSQL Activities and network-free Mock publish |
 
-PostgreSQL, Garage, and Temporal use named volumes. `stack:down` preserves them.
+PostgreSQL, Garage, and Temporal use named volumes. `stack:down` preserves them. The worker
+uses a read-only filesystem, runs as non-root, and refuses to start unless dry-run is enabled
+and external side effects are disabled.
 
 ## Prerequisites
 
@@ -28,7 +31,7 @@ PostgreSQL, Garage, and Temporal use named volumes. `stack:down` preserves them.
 
 The one-command startup performs a Docker daemon check, checks unused loopback ports,
 generates random local-only credentials under ignored `.runtime/compose.env`, validates
-Compose, builds the API/web images, waits for health checks, and runs the independent
+Compose, builds the API/web/workflow-worker images, waits for health checks, and runs the independent
 verification suite:
 
 ```powershell

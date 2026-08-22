@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_FILE = ROOT / "infra" / "docker-compose.yml"
 RUNTIME_DIR = ROOT / ".runtime"
 ENV_FILE = RUNTIME_DIR / "compose.env"
-EXPECTED_SERVICES = {"api", "object-storage", "postgres", "temporal", "web"}
+EXPECTED_SERVICES = {"api", "object-storage", "postgres", "temporal", "web", "workflow-worker"}
 PORT_DEFAULTS = {
     "API_PORT": 8000,
     "OBJECT_STORAGE_PORT": 3900,
@@ -192,7 +192,7 @@ def verify() -> None:
     wait_for_http(f"http://127.0.0.1:{ports['API_PORT']}/healthz", expected_json=True)
     wait_for_http(f"http://127.0.0.1:{ports['WEB_PORT']}/")
     wait_for_http(f"http://127.0.0.1:{ports['TEMPORAL_UI_PORT']}/")
-    print("Local stack verified: 5 services healthy; external side effects remain disabled.")
+    print("Local stack verified: 6 services healthy; external side effects remain disabled.")
 
 
 def main(arguments: list[str] | None = None) -> int:

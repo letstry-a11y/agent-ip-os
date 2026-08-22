@@ -108,6 +108,33 @@ services:
     tmpfs:
       - /tmp
 
+  workflow-worker:
+    build:
+      context: ..
+      dockerfile: apps/workflow-worker/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://agent_ip:${POSTGRES_PASSWORD}@postgres:5432/agent_ip
+      DRY_RUN: "true"
+      EXTERNAL_SIDE_EFFECTS_ENABLED: "false"
+      TEMPORAL_ADDRESS: temporal:7233
+      WORKER_READY_FILE: /tmp/workflow-worker-ready
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/workflow-worker-ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    init: true
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
+
   web:
     build:
       context: ..

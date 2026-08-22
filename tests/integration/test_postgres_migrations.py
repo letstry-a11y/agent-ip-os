@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import selectors
 import shutil
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
@@ -16,6 +18,8 @@ from agent_ip_data_models import (
     candidate_hash,
     candidate_payload,
 )
+from agent_ip_workflows.activities import PostgresWorkflowActivities
+from agent_ip_workflows.models import IntentCommand, StateTransition
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from psycopg.errors import (
@@ -122,6 +126,10 @@ def test_core_constraints_outbox_atomicity_and_audit_chain(database_url: str) ->
         "0004_require_distinct_approvers.sql",
     )
     identifiers = _seed_approved_intent(database_url)
+    asyncio.run(
+        _exercise_real_workflow_activities(database_url, identifiers),
+        loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+    )
 
     with psycopg.connect(database_url, autocommit=True) as connection:
         candidate = connection.execute(
@@ -156,6 +164,13 @@ def test_core_constraints_outbox_atomicity_and_audit_chain(database_url: str) ->
             (identifiers["intent_id"],),
         ).fetchone()
         assert paired == (identifiers["intent_id"], identifiers["intent_id"])
+        assert connection.execute(
+            """
+            SELECT state, state_version FROM platform_candidate_states
+            WHERE project_id = %s AND candidate_id = %s
+            """,
+            (identifiers["project_id"], identifiers["candidate_id"]),
+        ).fetchone() == ("APPROVED", 1)
 
         with pytest.raises(ForeignKeyViolation), connection.transaction():
             connection.execute(
@@ -575,6 +590,33 @@ def _seed_approved_intent(database_url: str) -> dict[str, UUID]:
                 fingerprint=bytes.fromhex("77" * 32),
             )
     return identifiers
+
+
+async def _exercise_real_workflow_activities(
+    database_url: str, identifiers: dict[str, UUID]
+) -> None:
+    activities = PostgresWorkflowActivities(database_url)
+    transition = StateTransition(
+        project_id=str(identifiers["project_id"]),
+        resource_id=str(identifiers["candidate_id"]),
+        expected_version=0,
+        target_state="APPROVED",
+    )
+    assert await activities.advance_candidate_state(transition) == 1
+    assert await activities.advance_candidate_state(transition) == 1
+
+    command = IntentCommand(
+        project_id=str(identifiers["project_id"]),
+        candidate_id=str(identifiers["candidate_id"]),
+        approval_snapshot_id=str(identifiers["approval_snapshot_id"]),
+        account_id=str(identifiers["account_id"]),
+        intent_id=str(uuid4()),
+        outbox_id=str(uuid4()),
+        request_fingerprint="78" * 32,
+        normalized_schedule_slot="2026-08-22T02:00:00+00:00",
+    )
+    await activities.create_publish_intent_and_outbox(command)
+    await activities.create_publish_intent_and_outbox(command)
 
 
 def _insert_intent_pair(

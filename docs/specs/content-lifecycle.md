@@ -1,7 +1,7 @@
 # Content and platform-candidate lifecycle
 
-- Status: M1-03 identity/invalidation rules implemented; founder review pending
-- Version: 0.2
+- Status: M1-02 workflow and M1-03 identity/invalidation rules implemented; founder review pending
+- Version: 0.3
 - Normative for: M1 workflow, approval, outbox, reconciliation, stop, and later publishing tasks
 - Derived from: [technical baseline](../baseline/AI超级IP全Agent公司技术方案_v1.md)
 
@@ -113,6 +113,10 @@ request_fingerprint = sha256(
 ```
 
 M1-03 implements the byte-level rules in [canonical JSON and approval binding v1](canonical-json-v1.md): UTF-8 without BOM/newline, Unicode NFC, UTF-8 byte key ordering, safe integers, exact booleans/null, UTC millisecond timestamps, and distinct absence versus null. The approval snapshot binds the candidate, fact-report, rights-manifest, risk-report, policy, account, action, distinct human approver(s), decision time, and expiry. Its own hash is recomputed before use.
+
+M1-02 implements the durable path in [Temporal workflow v1](temporal-workflow-v1.md).
+Temporal owns replayable timers/signals/retries and PostgreSQL Activities own authoritative
+compare-and-swap state plus the atomic intent/outbox transaction.
 
 Any bound value change invalidates the approval and requires a new immutable candidate/report/approval chain. A legitimate repost creates a new `publish_intent_id`, explicit reason, and separately approved schedule; it does not mutate uniqueness data.
 
