@@ -1,7 +1,7 @@
 # M1-06 minimal approval API and page evidence
 
 - Captured: 2026-08-22 (Asia/Shanghai)
-- Result: **PASS / READY FOR HUMAN REVIEW**
+- Result: **PASS / ACCEPTED**
 - Safety boundary: local Mock identity and PostgreSQL only; no real Provider, platform,
   portrait, publication, credential, or external side effect
 
@@ -37,9 +37,16 @@
    changed the authoritative result from `PENDING / V0` to `APPROVED / V1` and displayed the
    generated approval snapshot hash.
 
-## Human acceptance still required
+6. [PR #9](https://github.com/letstry-a11y/agent-ip-os/pull/9) passed its protected quality
+   check and reported no conflict with `main` before acceptance was recorded.
 
-The founder should confirm that the review desk exposes enough material for the early content
-workflow and that the three Chinese decision labels are unambiguous. Acceptance may move
-M1-06 from `READY_FOR_REVIEW` to `DONE`; it does not enable a real identity provider, paid
-generation, portrait processing, platform login, or publication.
+## Human acceptance
+
+On 2026-08-22 the founder completed three independent local review requests through the
+responsive desk. The authoritative API and PostgreSQL state recorded `APPROVED`,
+`REVISION_REQUESTED`, and `REJECTED` respectively, each at state version 1. The founder then
+confirmed the review was complete, accepting the displayed evidence boundary and the three
+Chinese decision paths for early Mock-only operation.
+
+Acceptance does not enable a real identity provider, paid generation, portrait processing,
+platform login, publication, or any other external side effect.

@@ -1,6 +1,6 @@
 # Approval console and API v1
 
-- Status: implemented for M1-06 review
+- Status: implemented and accepted for M1-06
 - Scope: local Mock-only human review of one immutable platform candidate
 - External effects: none
 
